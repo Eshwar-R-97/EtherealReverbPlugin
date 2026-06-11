@@ -11,7 +11,14 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
     GIT_TAG        7.0.12
 )
-FetchContent_MakeAvailable(JUCE)
+
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.4.0
+)
+
+FetchContent_MakeAvailable(JUCE Catch2)
 
 juce_add_plugin(EtherealReverb
     COMPANY_NAME                "EshwarRajasekar"
@@ -55,4 +62,29 @@ target_link_libraries(EtherealReverb
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
+)
+
+# ── Unit tests ────────────────────────────────────────────────────────────────
+juce_add_console_app(EtherealReverbTests PRODUCT_NAME "EtherealReverbTests")
+
+target_sources(EtherealReverbTests
+    PRIVATE
+        Tests/CircularBufferTests.cpp
+        Tests/PreDelayTests.cpp
+        Source/DSPEngine.cpp
+)
+
+target_include_directories(EtherealReverbTests PRIVATE Source)
+
+target_compile_definitions(EtherealReverbTests
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+)
+
+target_link_libraries(EtherealReverbTests
+    PRIVATE
+        Catch2::Catch2WithMain
+        juce::juce_audio_basics
+        juce::juce_core
 )
