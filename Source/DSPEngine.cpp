@@ -85,46 +85,47 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         preDelayLines[1].write (dryR);
 
         // ── Stage 2: Feedback comb filter bank (4 per channel, parallel) ─
-        // Each line: read delayed output, apply 1-pole LP (damping), feed back
-        // scaled by g. Four outputs summed and normalised to [-1,1] by * 0.25.
-        float combOutL = 0.0f, combOutR = 0.0f;
+        // Store individual outputs — Stage 3 needs them before summing.
+        float combOutsL[kNumCombs], combOutsR[kNumCombs];
 
         for (int i = 0; i < kNumCombs; ++i)
         {
             // Left
-            const int idxL  = i;
+            const int   idxL = i;
             const float outL = combLines[idxL].read (combN[idxL]);
-            combDampState[idxL] = params.damping       * combDampState[idxL]
+            combDampState[idxL] = params.damping         * combDampState[idxL]
                                 + (1.0f - params.damping) * outL;
             const float fbL = params.freeze ? outL : combDampState[idxL] * combG[idxL];
             combLines[idxL].write (wetL + fbL);
-            combOutL += outL;
+            combOutsL[i] = outL;
 
             // Right
-            const int idxR   = kNumCombs + i;
+            const int   idxR = kNumCombs + i;
             const float outR = combLines[idxR].read (combN[idxR]);
-            combDampState[idxR] = params.damping       * combDampState[idxR]
+            combDampState[idxR] = params.damping         * combDampState[idxR]
                                 + (1.0f - params.damping) * outR;
             const float fbR = params.freeze ? outR : combDampState[idxR] * combG[idxR];
             combLines[idxR].write (wetR + fbR);
-            combOutR += outR;
+            combOutsR[i] = outR;
         }
 
-        wetL = combOutL * 0.25f;
-        wetR = combOutR * 0.25f;
-
         // ── Stage 3: Hadamard mixing matrix (4x4) ────────────────────────
+        // Apply H4 to each channel's 4 comb outputs — produces 4 distinct
+        // linear combinations. h0 is the vanilla sum; h1 is the alternating
+        // combination. Cross-coupling h1 from the opposite channel into wetL/wetR
+        // decorrelates L and R proportional to diffusion.
         //
-        // Mix the 4 summed comb outputs using the normalised 4x4 Hadamard matrix.
-        // This cross-couples all lines so echo density builds much faster than
-        // vanilla Schroeder. The diffusion parameter scales the off-diagonal terms.
-        //
-        // H4 = 0.5 * [ 1  1  1  1 ]
-        //             [ 1 -1  1 -1 ]
-        //             [ 1  1 -1 -1 ]
-        //             [ 1 -1 -1  1 ]
-        //
-        // YOUR CODE HERE
+        // diffusion=0 → vanilla Schroeder summing (h0L * 0.25, h0R * 0.25)
+        // diffusion=1 → full cross-coupling (h1 from opposite channel blended in)
+        const float h0L = combOutsL[0] + combOutsL[1] + combOutsL[2] + combOutsL[3];
+        const float h1L = combOutsL[0] - combOutsL[1] + combOutsL[2] - combOutsL[3];
+
+        const float h0R = combOutsR[0] + combOutsR[1] + combOutsR[2] + combOutsR[3];
+        const float h1R = combOutsR[0] - combOutsR[1] + combOutsR[2] - combOutsR[3];
+
+        // ± asymmetry between L/R ensures they are decorrelated, not just scaled
+        wetL = (h0L + params.diffusion * h1R) * 0.25f;
+        wetR = (h0R - params.diffusion * h1L) * 0.25f;
 
         // ── Stage 4: All-pass filter chain (2 in series per channel) ──────
         //
