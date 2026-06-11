@@ -49,25 +49,22 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     float* const left    = buffer.getWritePointer (0);
     float* const right   = buffer.getWritePointer (1);
 
+    // Compute once per block — parameter doesn't change mid-block
+    const int preDelaySamples = (int) (params.preDelay * 0.001f * (float) sampleRate);
+
     for (int n = 0; n < numSamples; ++n)
     {
         const float dryL = left[n];
         const float dryR = right[n];
-        float wetL = dryL;
-        float wetR = dryR;
 
         // ── Stage 1: Pre-delay ────────────────────────────────────────────
-        //
-        // Convert params.preDelay (ms) to samples, read the delayed output,
-        // then write the dry input into the line.
-        //
-        // const int preDelaySamples = (int)(params.preDelay * 0.001f * sampleRate);
-        // wetL = preDelayLines[0].read(preDelaySamples);
-        // wetR = preDelayLines[1].read(preDelaySamples);
-        // preDelayLines[0].write(dryL);
-        // preDelayLines[1].write(dryR);
-        //
-        // YOUR CODE HERE
+        // read(0) would return stale data at writeHead, so bypass the buffer
+        // entirely when delay=0. Always write so the buffer stays current if
+        // the knob is turned up mid-session.
+        float wetL = (preDelaySamples > 0) ? preDelayLines[0].read (preDelaySamples) : dryL;
+        float wetR = (preDelaySamples > 0) ? preDelayLines[1].read (preDelaySamples) : dryR;
+        preDelayLines[0].write (dryL);
+        preDelayLines[1].write (dryR);
 
         // ── Stage 2: Feedback comb filter bank (4 per channel, parallel) ─
         //
