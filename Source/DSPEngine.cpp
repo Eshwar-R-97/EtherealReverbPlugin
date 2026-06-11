@@ -70,6 +70,15 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         }
     }
 
+    // All-pass delay lengths scale with roomSize for coherent room character
+    int apN[kNumAllPass * kNumChannels];
+    for (int ch = 0; ch < kNumChannels; ++ch)
+        for (int i = 0; i < kNumAllPass; ++i)
+            apN[ch * kNumAllPass + i] = juce::jmax (1, (int) (kAllPassTimes[i] * 0.001f * sr * params.roomSize));
+
+    // Schroeder's canonical g=0.7 scaled by diffusion: 0 = transparent, 1 = full density
+    const float apGain = params.diffusion * 0.7f;
+
     for (int n = 0; n < numSamples; ++n)
     {
         const float dryL = left[n];
@@ -128,14 +137,28 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         wetR = (h0R - params.diffusion * h1L) * 0.25f;
 
         // ── Stage 4: All-pass filter chain (2 in series per channel) ──────
-        //
-        // Standard Schroeder all-pass (diffusion gain g = params.diffusion * 0.7):
-        //   float delayed  = allPassLines[idx].read(delaySamples)
-        //   float passOut  = -g * input + delayed
-        //   allPassLines[idx].write(input + g * delayed)
-        //   input = passOut  (chain output into next filter)
-        //
-        // YOUR CODE HERE
+        // Each filter: flat magnitude, complex phase — increases echo density
+        // without tonal coloration. Series connection compounds the effect.
+        float sigL = wetL;
+        for (int i = 0; i < kNumAllPass; ++i)
+        {
+            const float delayed = allPassLines[i].read (apN[i]);
+            const float out     = -apGain * sigL + delayed;
+            allPassLines[i].write (sigL + apGain * delayed);
+            sigL = out;
+        }
+        wetL = sigL;
+
+        float sigR = wetR;
+        for (int i = 0; i < kNumAllPass; ++i)
+        {
+            const int   idx     = kNumAllPass + i;
+            const float delayed = allPassLines[idx].read (apN[idx]);
+            const float out     = -apGain * sigR + delayed;
+            allPassLines[idx].write (sigR + apGain * delayed);
+            sigR = out;
+        }
+        wetR = sigR;
 
         // ── Stage 5: Tilt EQ (inside feedback — applied per sample) ───────
         //
