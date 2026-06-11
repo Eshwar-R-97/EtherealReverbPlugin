@@ -49,8 +49,26 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     float* const left    = buffer.getWritePointer (0);
     float* const right   = buffer.getWritePointer (1);
 
-    // Compute once per block — parameter doesn't change mid-block
-    const int preDelaySamples = (int) (params.preDelay * 0.001f * (float) sampleRate);
+    // ── Per-block pre-computation (no pow/multiply in the hot path) ─────────────
+    const float sr = (float) sampleRate;
+    const int preDelaySamples = (int) (params.preDelay * 0.001f * sr);
+
+    // Delay lengths and feedback gains for all comb lines
+    // N scales with roomSize; g is the RT60 formula: -60dB at params.decay seconds
+    int   combN[kNumCombs * kNumChannels];
+    float combG[kNumCombs * kNumChannels];
+
+    for (int ch = 0; ch < kNumChannels; ++ch)
+    {
+        for (int i = 0; i < kNumCombs; ++i)
+        {
+            const int   idx    = ch * kNumCombs + i;
+            const float baseMs = (ch == 0) ? kCombTimesL[i] : kCombTimesR[i];
+            const int   N      = juce::jmax (1, (int) (baseMs * 0.001f * sr * params.roomSize));
+            combN[idx] = N;
+            combG[idx] = std::pow (10.0f, -3.0f * (float) N / (params.decay * sr));
+        }
+    }
 
     for (int n = 0; n < numSamples; ++n)
     {
@@ -67,21 +85,33 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         preDelayLines[1].write (dryR);
 
         // ── Stage 2: Feedback comb filter bank (4 per channel, parallel) ─
-        //
-        // feedbackGain is derived from params.decay and the delay time:
-        //   feedbackGain = pow(10.0f, -3.0f * delaySamples / (params.decay * sampleRate))
-        // This gives -60dB at t=decay seconds (the standard RT60 definition).
-        //
-        // For each line [ch * kNumCombs + i]:
-        //   float out  = combLines[idx].read(delaySamples)
-        //   float damp = combDampState[idx] += damping * (out - combDampState[idx])
-        //   float fb   = params.freeze ? out : damp * feedbackGain
-        //   combLines[idx].write(wetInput + fb)
-        //   sum += out
-        //
-        // Sum all 4 outputs for L and R separately, then scale by 0.25f.
-        //
-        // YOUR CODE HERE
+        // Each line: read delayed output, apply 1-pole LP (damping), feed back
+        // scaled by g. Four outputs summed and normalised to [-1,1] by * 0.25.
+        float combOutL = 0.0f, combOutR = 0.0f;
+
+        for (int i = 0; i < kNumCombs; ++i)
+        {
+            // Left
+            const int idxL  = i;
+            const float outL = combLines[idxL].read (combN[idxL]);
+            combDampState[idxL] = params.damping       * combDampState[idxL]
+                                + (1.0f - params.damping) * outL;
+            const float fbL = params.freeze ? outL : combDampState[idxL] * combG[idxL];
+            combLines[idxL].write (wetL + fbL);
+            combOutL += outL;
+
+            // Right
+            const int idxR   = kNumCombs + i;
+            const float outR = combLines[idxR].read (combN[idxR]);
+            combDampState[idxR] = params.damping       * combDampState[idxR]
+                                + (1.0f - params.damping) * outR;
+            const float fbR = params.freeze ? outR : combDampState[idxR] * combG[idxR];
+            combLines[idxR].write (wetR + fbR);
+            combOutR += outR;
+        }
+
+        wetL = combOutL * 0.25f;
+        wetR = combOutR * 0.25f;
 
         // ── Stage 3: Hadamard mixing matrix (4x4) ────────────────────────
         //
