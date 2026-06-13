@@ -1,5 +1,7 @@
 # Ethereal Reverb
 
+![Ethereal Reverb UI](assets/screenshot.png)
+
 An algorithmic reverb plugin by Eshwar Rajasekar — available for **FL Studio** (Mac) and **Logic Pro**.
 
 Made for learning how to build audio plugins, if you have any suggestions open an issue and I'll try to specialize this plugin to that!
