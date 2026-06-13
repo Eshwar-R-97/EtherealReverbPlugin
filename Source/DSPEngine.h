@@ -109,6 +109,10 @@ private:
     // Indexed as [channel * kNumAllPass + filterIndex]
     std::array<CircularBuffer, kNumAllPass * kNumChannels> allPassLines;
 
+    // ── Tilt EQ: one 1-pole lowpass state per channel ────────────────────
+    // Shelf frequency ~1 kHz; tiltEQ>0 darkens, <0 brightens the tail
+    std::array<float, kNumChannels> tiltState {};
+
     // ── LFO phase accumulators: one per comb line ─────────────────────────
     // Incremented each sample, wraps at 1.0
     // Indexed same as combLines: [channel * kNumCombs + filterIndex]

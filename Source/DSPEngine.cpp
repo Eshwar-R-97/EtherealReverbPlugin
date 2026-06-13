@@ -40,6 +40,7 @@ void DSPEngine::reset()
     for (auto& line : combLines)     line.reset();
     for (auto& line : allPassLines)  line.reset();
     combDampState.fill (0.0f);
+    tiltState.fill (0.0f);
     lfoPhases.fill (0.0f);
 }
 
@@ -78,6 +79,9 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
 
     // Schroeder's canonical g=0.7 scaled by diffusion: 0 = transparent, 1 = full density
     const float apGain = params.diffusion * 0.7f;
+
+    // Tilt EQ: 1-pole coefficient for shelf at ~1 kHz
+    const float tiltCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 1000.0f / sr);
 
     for (int n = 0; n < numSamples; ++n)
     {
@@ -160,14 +164,15 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         }
         wetR = sigR;
 
-        // ── Stage 5: Tilt EQ (inside feedback — applied per sample) ───────
-        //
-        // A first-order shelving filter whose tilt direction is controlled by
-        // params.tiltEQ (-1 = darken, +1 = brighten).
-        // This runs inside the feedback path, not after it.
-        // Implement as a biquad or 1-pole shelf — your choice.
-        //
-        // YOUR CODE HERE
+        // ── Stage 5: Tilt EQ ─────────────────────────────────────────────
+        // 1-pole lowpass shelf: state tracks the low-frequency content.
+        // tiltEQ > 0 blends toward LP output (darken); < 0 subtracts it (brighten).
+        // Shelf frequency ~1 kHz via ω = 2π·f/sr approximation.
+        wetL += params.tiltEQ * (tiltState[0] - wetL);
+        tiltState[0] = (1.0f - tiltCoeff) * wetL + tiltCoeff * tiltState[0];
+
+        wetR += params.tiltEQ * (tiltState[1] - wetR);
+        tiltState[1] = (1.0f - tiltCoeff) * wetR + tiltCoeff * tiltState[1];
 
         // ── Stage 6: Dry/wet blend (framework territory) ──────────────────
         left[n]  = dryL + (wetL - dryL) * params.mix;
