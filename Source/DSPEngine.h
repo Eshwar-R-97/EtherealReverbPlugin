@@ -89,18 +89,20 @@ private:
     // ── Pre-delay (one line per channel, max 150ms) ───────────────────────
     std::array<CircularBuffer, kNumChannels> preDelayLines;
 
-    // ── Feedback comb filters: 4 per channel, run in parallel ────────────
-    static constexpr int kNumCombs = 4;
+    // ── FDN: 8 delay lines, cross-coupled via Householder matrix ─────────
+    // Taps 0-3 are fed by the left input, taps 4-7 by the right input.
+    // The Householder matrix cross-couples all 8 every sample, so L and R
+    // decorrelate naturally without a separate stereo bank.
+    static constexpr int kNumTaps = 8;
 
-    // Classic Schroeder delay times (ms), slightly detuned L vs R for stereo width
-    static constexpr float kCombTimesL[kNumCombs] { 29.7f, 37.1f, 41.1f, 43.7f };
-    static constexpr float kCombTimesR[kNumCombs] { 30.1f, 37.5f, 41.5f, 44.1f };
+    // Mutually prime delay times (ms) — no common factors avoids periodicity
+    static constexpr float kFDNTimes[kNumTaps]
+        { 19.7f, 22.3f, 29.1f, 33.7f, 41.1f, 47.3f, 53.9f, 61.1f };
 
-    // Indexed as [channel * kNumCombs + filterIndex]
-    std::array<CircularBuffer, kNumCombs * kNumChannels> combLines;
+    std::array<CircularBuffer, kNumTaps> fdnLines;
 
-    // 1-pole lowpass state per comb line — implements the damping parameter
-    std::array<float, kNumCombs * kNumChannels> combDampState {};
+    // 1-pole lowpass state per tap — implements the damping parameter
+    std::array<float, kNumTaps> fdnDampState {};
 
     // ── All-pass filters: 2 per channel, run in series ───────────────────
     static constexpr int kNumAllPass = 2;
@@ -113,10 +115,9 @@ private:
     // Shelf frequency ~1 kHz; tiltEQ>0 darkens, <0 brightens the tail
     std::array<float, kNumChannels> tiltState {};
 
-    // ── LFO phase accumulators: one per comb line ─────────────────────────
+    // ── LFO phase accumulators: one per FDN tap ───────────────────────────
     // Incremented each sample, wraps at 1.0
-    // Indexed same as combLines: [channel * kNumCombs + filterIndex]
-    std::array<float, kNumCombs * kNumChannels> lfoPhases {};
+    std::array<float, kNumTaps> lfoPhases {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DSPEngine)
 };

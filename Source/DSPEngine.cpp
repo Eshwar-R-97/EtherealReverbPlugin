@@ -9,16 +9,11 @@ void DSPEngine::prepare (double sr, int /*maxBlockSize*/)
     for (auto& line : preDelayLines)
         line.allocate (maxPreDelay);
 
-    // Comb filters: allocate at full roomSize (1.0) + 10% headroom for mod depth
-    // At runtime, roomSize scales the actual read offset — buffer stays this size
-    for (int ch = 0; ch < kNumChannels; ++ch)
+    // FDN taps: allocate at full roomSize (1.0) + 10% headroom for mod depth
+    for (int i = 0; i < kNumTaps; ++i)
     {
-        for (int i = 0; i < kNumCombs; ++i)
-        {
-            const float baseMs = (ch == 0) ? kCombTimesL[i] : kCombTimesR[i];
-            const int   samples = (int) (baseMs * 0.001 * sampleRate * 1.1) + 4;
-            combLines[ch * kNumCombs + i].allocate (samples);
-        }
+        const int samples = (int) (kFDNTimes[i] * 0.001 * sampleRate * 1.1) + 4;
+        fdnLines[i].allocate (samples);
     }
 
     // All-pass filters
@@ -37,12 +32,12 @@ void DSPEngine::prepare (double sr, int /*maxBlockSize*/)
 void DSPEngine::reset()
 {
     for (auto& line : preDelayLines) line.reset();
-    for (auto& line : combLines)     line.reset();
+    for (auto& line : fdnLines)      line.reset();
     for (auto& line : allPassLines)  line.reset();
-    combDampState.fill (0.0f);
+    fdnDampState.fill (0.0f);
     tiltState.fill (0.0f);
-    for (int k = 0; k < kNumCombs * kNumChannels; ++k)
-        lfoPhases[(size_t) k] = (float) k / (float) (kNumCombs * kNumChannels);
+    for (int k = 0; k < kNumTaps; ++k)
+        lfoPhases[(size_t) k] = (float) k / (float) kNumTaps;
 }
 
 void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& params)
@@ -55,21 +50,14 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     const float sr = (float) sampleRate;
     const int preDelaySamples = (int) (params.preDelay * 0.001f * sr);
 
-    // Delay lengths and feedback gains for all comb lines
-    // N scales with roomSize; g is the RT60 formula: -60dB at params.decay seconds
-    int   combN[kNumCombs * kNumChannels];
-    float combG[kNumCombs * kNumChannels];
-
-    for (int ch = 0; ch < kNumChannels; ++ch)
+    // FDN tap delay lengths and RT60 feedback gains
+    // N scales with roomSize; g derived from RT60: -60dB in params.decay seconds
+    int   fdnN[kNumTaps];
+    float fdnG[kNumTaps];
+    for (int i = 0; i < kNumTaps; ++i)
     {
-        for (int i = 0; i < kNumCombs; ++i)
-        {
-            const int   idx    = ch * kNumCombs + i;
-            const float baseMs = (ch == 0) ? kCombTimesL[i] : kCombTimesR[i];
-            const int   N      = juce::jmax (1, (int) (baseMs * 0.001f * sr * params.roomSize));
-            combN[idx] = N;
-            combG[idx] = std::pow (10.0f, -3.0f * (float) N / (params.decay * sr));
-        }
+        fdnN[i] = juce::jmax (1, (int) (kFDNTimes[i] * 0.001f * sr * params.roomSize));
+        fdnG[i] = std::pow (10.0f, -3.0f * (float) fdnN[i] / (params.decay * sr));
     }
 
     // All-pass delay lengths scale with roomSize for coherent room character
@@ -85,9 +73,11 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     const float tiltCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 1000.0f / sr);
 
     // Modulation: LFO increment per sample, max depth in samples (~0.5ms)
-    const float lfoInc         = params.modRate / sr;
+    const float lfoInc          = params.modRate / sr;
     const float modDepthSamples = params.modDepth * 24.0f;
     const float twoPi           = juce::MathConstants<float>::twoPi;
+    // Householder scale factor: 2/N applied once to the summed tap outputs
+    const float householderScale = 2.0f / (float) kNumTaps;
 
     for (int n = 0; n < numSamples; ++n)
     {
@@ -103,59 +93,48 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         preDelayLines[0].write (dryL);
         preDelayLines[1].write (dryR);
 
-        // ── Stage 2 + 6: Comb filter bank with LFO modulation ────────────
-        // Advance all LFO phases first, then read with fractional delay.
-        for (int k = 0; k < kNumCombs * kNumChannels; ++k)
+        // ── Stage 2: FDN — read, Householder mix, damp, write ────────────
+        // Advance LFO phases for all taps first
+        for (int i = 0; i < kNumTaps; ++i)
         {
-            lfoPhases[(size_t) k] += lfoInc;
-            if (lfoPhases[(size_t) k] >= 1.0f)
-                lfoPhases[(size_t) k] -= 1.0f;
+            lfoPhases[(size_t) i] += lfoInc;
+            if (lfoPhases[(size_t) i] >= 1.0f)
+                lfoPhases[(size_t) i] -= 1.0f;
         }
 
-        float combOutsL[kNumCombs], combOutsR[kNumCombs];
-
-        for (int i = 0; i < kNumCombs; ++i)
+        // Read all taps with LFO-modulated fractional delay
+        float y[kNumTaps];
+        for (int i = 0; i < kNumTaps; ++i)
         {
-            // Left — modulate read position with LFO
-            const int   idxL    = i;
-            const float lfoValL = std::sin (lfoPhases[(size_t) idxL] * twoPi);
-            const float delayL  = juce::jmax (1.0f, (float) combN[idxL] + lfoValL * modDepthSamples);
-            const float outL    = combLines[idxL].readInterpolated (delayL);
-            combDampState[idxL] = params.damping         * combDampState[idxL]
-                                + (1.0f - params.damping) * outL;
-            const float fbL = params.freeze ? outL : combDampState[idxL] * combG[idxL];
-            combLines[idxL].write (wetL + fbL);
-            combOutsL[i] = outL;
-
-            // Right — modulate read position with LFO
-            const int   idxR    = kNumCombs + i;
-            const float lfoValR = std::sin (lfoPhases[(size_t) idxR] * twoPi);
-            const float delayR  = juce::jmax (1.0f, (float) combN[idxR] + lfoValR * modDepthSamples);
-            const float outR    = combLines[idxR].readInterpolated (delayR);
-            combDampState[idxR] = params.damping         * combDampState[idxR]
-                                + (1.0f - params.damping) * outR;
-            const float fbR = params.freeze ? outR : combDampState[idxR] * combG[idxR];
-            combLines[idxR].write (wetR + fbR);
-            combOutsR[i] = outR;
+            const float lfoVal = std::sin (lfoPhases[(size_t) i] * twoPi);
+            const float delay  = juce::jmax (1.0f, (float) fdnN[i] + lfoVal * modDepthSamples);
+            y[i] = fdnLines[i].readInterpolated (delay);
         }
 
-        // ── Stage 3: Hadamard mixing matrix (4x4) ────────────────────────
-        // Apply H4 to each channel's 4 comb outputs — produces 4 distinct
-        // linear combinations. h0 is the vanilla sum; h1 is the alternating
-        // combination. Cross-coupling h1 from the opposite channel into wetL/wetR
-        // decorrelates L and R proportional to diffusion.
-        //
-        // diffusion=0 → vanilla Schroeder summing (h0L * 0.25, h0R * 0.25)
-        // diffusion=1 → full cross-coupling (h1 from opposite channel blended in)
-        const float h0L = combOutsL[0] + combOutsL[1] + combOutsL[2] + combOutsL[3];
-        const float h1L = combOutsL[0] - combOutsL[1] + combOutsL[2] - combOutsL[3];
+        // Householder reflection: v[i] = y[i] - (2/N) * sum(y)
+        // This is O(N) — all off-diagonal values are identical so one sum suffices
+        float tapSum = 0.0f;
+        for (int i = 0; i < kNumTaps; ++i) tapSum += y[i];
+        tapSum *= householderScale;
 
-        const float h0R = combOutsR[0] + combOutsR[1] + combOutsR[2] + combOutsR[3];
-        const float h1R = combOutsR[0] - combOutsR[1] + combOutsR[2] - combOutsR[3];
+        float v[kNumTaps];
+        for (int i = 0; i < kNumTaps; ++i) v[i] = y[i] - tapSum;
 
-        // ± asymmetry between L/R ensures they are decorrelated, not just scaled
-        wetL = (h0L + params.diffusion * h1R) * 0.25f;
-        wetR = (h0R - params.diffusion * h1L) * 0.25f;
+        // Apply per-tap damping LP and RT60 gain, then write back
+        // Taps 0-3 are driven by wetL, taps 4-7 by wetR
+        for (int i = 0; i < kNumTaps; ++i)
+        {
+            fdnDampState[i] = params.damping         * fdnDampState[i]
+                            + (1.0f - params.damping) * v[i];
+            const float fb    = params.freeze ? v[i] : fdnDampState[i] * fdnG[i];
+            const float input = (i < kNumTaps / 2) ? wetL : wetR;
+            fdnLines[i].write (input + fb);
+        }
+
+        // Output: first half of taps → L, second half → R
+        // The Householder cross-coupling decorrelates them naturally
+        wetL = (y[0] + y[1] + y[2] + y[3]) * 0.25f;
+        wetR = (y[4] + y[5] + y[6] + y[7]) * 0.25f;
 
         // ── Stage 4: All-pass filter chain (2 in series per channel) ──────
         // Each filter: flat magnitude, complex phase — increases echo density
