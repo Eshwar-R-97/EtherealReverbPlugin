@@ -2,6 +2,8 @@
 
 An algorithmic reverb plugin by Eshwar Rajasekar. Available as AU (Logic Pro) and VST3 (FL Studio).
 
+Made for learning how to build audio plugins, if you have any suggestions open an issue and I'll try to specialize this plugin to that!
+
 ---
 
 ## Installing for Logic Pro (AU)
