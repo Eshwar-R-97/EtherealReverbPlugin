@@ -97,37 +97,21 @@ It will ask for your **Mac login password**. Type it and press Enter. (The passw
 
 ---
 
-## Controls
+## Controls & Usage
 
-| Knob | What it does |
-|---|---|
-| **Pre-Delay** | Silence before the reverb starts. Higher = more space between the original sound and the room effect. |
-| **Room Size** | How big the virtual room is. Small = tight and close, large = cavernous. |
-| **Decay** | How long the reverb tail lasts (0.1 to 60 seconds). High values create huge, ambient washes. |
-| **Damping** | How quickly high frequencies fade. High damping = warmer, darker reverb (like carpet and curtains). |
-| **Diffusion** | How dense the reverb is. Low = you can hear distinct echoes, high = smooth wash. |
-| **Tilt EQ** | Shifts the tone of the reverb tail. Turn left for darker, turn right for brighter. |
-| **Mod Rate** | Speed of the subtle wobble/movement in the reverb. Adds shimmer and life. |
-| **Mod Depth** | How strong the movement is. High values give a more chorus-like or dreamy quality. |
-| **Mix** | Blend between the dry (original) signal and the wet (reverb) signal. |
-| **Freeze** | Locks the reverb tail so it sustains forever — great for ambient swells and drones. |
+For a full knob-by-knob reference, tips, and preset descriptions see **[quickstart.md](quickstart.md)**.
 
----
+Quick summary:
 
-## Presets
+| Section | Knobs |
+|---------|-------|
+| SPACE | Pre-Delay, Room Size, Decay, Damping, Diffusion, Tilt EQ |
+| MOTION | Mod Rate, Mod Depth, Mix, Decay Color |
+| SHIMMER | Shimmer, Pitch, Character, Shift Hz, Voices, Freeze, Reverse, Rev Amt |
 
-| Preset | Sound |
-|---|---|
-| Default | Neutral starting point |
-| Studio Room | Small, tight, natural — good for drums or vocals |
-| Cathedral | Huge, dark, slow — cinematic and spiritual |
-| Plate | Dense, bright, classic — the sound of classic records |
-| Dark Cave | Deep low-end, heavy damping — cavernous and moody |
-| Shimmer Pad | Long, bright, modulated — ethereal and evolving |
-| Broken Spring | Fast LFO chaos — wobbly and unpredictable |
-| Frozen Void | Maximum decay, freeze-ready — infinite ambience |
-| Snare Punch | Short, punchy — designed for drums |
-| Deep Space | Extreme tail, wide stereo — vast and cinematic |
+**Reverse** mode turns Pre-Delay into "REV TIME" and reveals a **REV AMT** knob — it creates a backwards swell that builds up before each note. Green UI palette activates automatically.
+
+**Freeze** locks the reverb tail at unity gain so it sustains indefinitely.
 
 ---
 

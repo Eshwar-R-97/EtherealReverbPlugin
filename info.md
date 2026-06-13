@@ -340,6 +340,7 @@ Attack: 40 ms — the reverb fades in underneath each note rather than appearing
 | Voices | 1–5 | 1 | Number of harmonic voices in shimmer |
 | Freeze | on/off | off | Locks FDN feedback at unity gain |
 | Reverse | on/off | off | Parallel reverse reverb; REV TIME knob sets buffer length |
+| Rev Amt | 0–1 | 0.75 | Injection level of reversed signal into FDN (visible only when Reverse is active) |
 
 ---
 
@@ -364,10 +365,10 @@ Read side outputs: out[n] = readBuf[revReadPos++]  (advances until next swap)
 The reversed signal is injected **additively** into the FDN input in parallel with the normal signal:
 
 ```
-fdnInput = wetSignal + shimClip×shimScale + reversedSignal×0.5
+fdnInput = wetSignal + shimClip×shimScale + reversedSignal×reverseMix
 ```
 
-The `×0.5` scale keeps total FDN input amplitude consistent when both paths are active. The tanh/HP shimmer path already bounds the total FDN injection, so stability is maintained.
+`reverseMix` (Rev Amt knob, 0–1, default 0.75) controls injection level. Higher values produce a more prominent reverse swell; lower values blend it subtly under the forward tail. The tanh/HP shimmer path already bounds the total FDN injection, so stability is maintained.
 
 ### Buffer length
 
