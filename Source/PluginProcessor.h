@@ -13,8 +13,12 @@ namespace ParamID
     static const juce::String modDepth  { "modDepth"  };
     static const juce::String tiltEQ      { "tiltEQ"      };
     static const juce::String mix         { "mix"         };
-    static const juce::String decayColor  { "decayColor"  };
-    static const juce::String freeze      { "freeze"      };
+    static const juce::String decayColor     { "decayColor"     };
+    static const juce::String shimmer        { "shimmer"        };
+    static const juce::String shimmerPitch   { "shimmerPitch"   };
+    static const juce::String shimmerChar    { "shimmerChar"    };
+    static const juce::String shimmerShiftHz { "shimmerShiftHz" };
+    static const juce::String freeze         { "freeze"         };
 }
 
 class EtherealReverbProcessor : public juce::AudioProcessor

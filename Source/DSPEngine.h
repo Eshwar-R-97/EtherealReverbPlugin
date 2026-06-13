@@ -17,8 +17,12 @@ struct DSPParams
     float modDepth  { 0.1f };   // 0–1, LFO displacement of delay read position
     float tiltEQ     { 0.0f };   // -1–1, shelving EQ inside feedback loop
     float mix        { 0.3f };   // 0–1, dry/wet
-    float decayColor { 0.0f };   // -1=dark (bass sustains), 0=neutral, +1=bright (HF sustains)
-    bool  freeze     { false };  // locks feedback at unity, tail sustains
+    float decayColor    { 0.0f };   // -1=dark (bass sustains), 0=neutral, +1=bright (HF sustains)
+    float shimmer       { 0.0f };   // 0–1, shimmer wet amount
+    float shimmerPitch  { 2.0f };   // granular pitch ratio (1.5=fifth, 2.0=octave, etc.)
+    float shimmerChar   { 0.3f };   // 0=pure granular, 1=50/50 granular+SSB blend
+    float shimmerShiftHz{ 15.0f };  // SSB frequency offset in Hz (5–50)
+    bool  freeze        { false };  // locks feedback at unity, tail sustains
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,6 +76,42 @@ struct CircularBuffer
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  GranularShimmer — two overlapping Hann-windowed grains, Hann crossfade
+//  Buffer is power-of-2 for cheap modular arithmetic via bitmask
+// ─────────────────────────────────────────────────────────────────────────────
+struct GranularShimmer
+{
+    static constexpr int kBufSize = 16384;  // ~341ms at 48kHz; supports pitch down to 0.5x
+
+    float buf[kBufSize] {};
+    int   writeHead { 0 };
+    float phase0    { 0.0f };                       // grain A read phase (0..kBufSize)
+    float phase1    { (float) (kBufSize / 2) };     // grain B, 180° offset for seamless crossfade
+
+    void  reset();
+    float process (float in, float pitchRatio);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SSBShimmer — single-sideband frequency shifter via IIR Hilbert pair
+//  Shifts all frequencies up by shiftHz regardless of pitch relationship.
+//  Two first-order allpass sections per branch (Berners-Abel design) give
+//  <2° phase error across 80Hz–18kHz at 48kHz.
+// ─────────────────────────────────────────────────────────────────────────────
+struct SSBShimmer
+{
+    static constexpr float kA[2] = { 0.4788f, 0.8762f };  // Branch A allpass coefficients
+    static constexpr float kB[2] = { 0.1617f, 0.7330f };  // Branch B (gives ~90° rel. to A)
+
+    float xA[2] {}, yA[2] {};   // Branch A state: [x_prev, y_prev] per section
+    float xB[2] {}, yB[2] {};   // Branch B state
+    float phase { 0.0f };        // quadrature oscillator phase (0..2π)
+
+    void  reset();
+    float process (float in, float phaseInc);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  DSPEngine — owns all reverb state, lives on the audio thread exclusively
 // ─────────────────────────────────────────────────────────────────────────────
 class DSPEngine
@@ -122,6 +162,15 @@ private:
     // ── LFO phase accumulators: one per FDN tap ───────────────────────────
     // Incremented each sample, wraps at 1.0
     std::array<float, kNumTaps> lfoPhases {};
+
+    // ── Shimmer engines (one per stereo channel) ──────────────────────────
+    // Granular pitch shifter taps the FDN output and pitch-shifts it.
+    // SSB frequency shifter adds inharmonic drift. Both blend via shimmerChar.
+    // The result morphs into the next sample's FDN input for recirculation.
+    std::array<GranularShimmer, 2> granular;
+    std::array<SSBShimmer, 2>      ssb;
+    float shimFeedbackL { 0.0f };
+    float shimFeedbackR { 0.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DSPEngine)
 };

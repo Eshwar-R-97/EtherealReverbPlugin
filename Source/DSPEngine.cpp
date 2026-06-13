@@ -1,5 +1,92 @@
 #include "DSPEngine.h"
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  GranularShimmer
+// ─────────────────────────────────────────────────────────────────────────────
+
+void GranularShimmer::reset()
+{
+    std::fill (buf, buf + kBufSize, 0.0f);
+    writeHead = 0;
+    phase0    = 0.0f;
+    phase1    = (float) (kBufSize / 2);
+}
+
+float GranularShimmer::process (float in, float pitchRatio)
+{
+    buf[writeHead] = in;
+
+    // Read at (writeHead - kBufSize + phase) which is (kBufSize - phase) samples ago.
+    // Linear interpolation for sub-sample accuracy.
+    auto readAt = [&] (float ph) -> float
+    {
+        const int   i    = (int) ph;
+        const float frac = ph - (float) i;
+        const int   r0   = (writeHead - kBufSize + i) & (kBufSize - 1);
+        const int   r1   = (r0 + 1) & (kBufSize - 1);
+        return buf[r0] + frac * (buf[r1] - buf[r0]);
+    };
+
+    // Hann window: w(ph) = 0.5 - 0.5*cos(2π*ph/kBufSize)
+    // Two grains 180° apart always sum to 1.0 (constant-power crossfade)
+    const float scale = juce::MathConstants<float>::twoPi / (float) kBufSize;
+    const float w0  = 0.5f - 0.5f * std::cos (scale * phase0);
+    const float w1  = 0.5f - 0.5f * std::cos (scale * phase1);
+    const float out = w0 * readAt (phase0) + w1 * readAt (phase1);
+
+    phase0 += pitchRatio;
+    if (phase0 >= (float) kBufSize) phase0 -= (float) kBufSize;
+    phase1 = phase0 + (float) (kBufSize / 2);
+    if (phase1 >= (float) kBufSize) phase1 -= (float) kBufSize;
+
+    writeHead = (writeHead + 1) & (kBufSize - 1);
+    return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SSBShimmer
+// ─────────────────────────────────────────────────────────────────────────────
+
+void SSBShimmer::reset()
+{
+    std::fill (xA, xA + 2, 0.0f); std::fill (yA, yA + 2, 0.0f);
+    std::fill (xB, xB + 2, 0.0f); std::fill (yB, yB + 2, 0.0f);
+    phase = 0.0f;
+}
+
+float SSBShimmer::process (float in, float phaseInc)
+{
+    // Branch A: two first-order allpass sections in series
+    // Difference equation: y[n] = a*(x[n] - y[n-1]) + x[n-1]
+    float sigA = in;
+    for (int i = 0; i < 2; ++i)
+    {
+        const float y = kA[i] * (sigA - yA[i]) + xA[i];
+        xA[i] = sigA; yA[i] = y; sigA = y;
+    }
+
+    // Branch B: same structure, different coefficients → ~90° relative to Branch A
+    float sigB = in;
+    for (int i = 0; i < 2; ++i)
+    {
+        const float y = kB[i] * (sigB - yB[i]) + xB[i];
+        xB[i] = sigB; yB[i] = y; sigB = y;
+    }
+
+    // Upper-sideband modulation: shifts all frequencies up by shiftHz
+    const float cosP = std::cos (phase);
+    const float sinP = std::sin (phase);
+    phase += phaseInc;
+    if (phase >= juce::MathConstants<float>::twoPi)
+        phase -= juce::MathConstants<float>::twoPi;
+
+    return sigA * cosP - sigB * sinP;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DSPEngine
+// ─────────────────────────────────────────────────────────────────────────────
+
 void DSPEngine::prepare (double sr, int /*maxBlockSize*/)
 {
     sampleRate = sr;
@@ -39,6 +126,9 @@ void DSPEngine::reset()
     tiltState.fill (0.0f);
     for (int k = 0; k < kNumTaps; ++k)
         lfoPhases[(size_t) k] = (float) k / (float) kNumTaps;
+    for (auto& g : granular) g.reset();
+    for (auto& s : ssb)      s.reset();
+    shimFeedbackL = shimFeedbackR = 0.0f;
 }
 
 void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& params)
@@ -123,8 +213,15 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         float v[kNumTaps];
         for (int i = 0; i < kNumTaps; ++i) v[i] = y[i] - tapSum;
 
+        // Shimmer morphs the FDN input: blends the dry pre-delay signal with
+        // the pitch-shifted feedback from the previous sample. This creates
+        // a recirculating pitch-rise loop without additive energy growth.
+        const float shimBlend = params.shimmer * 0.6f;
+        const float fdnInputL = wetL * (1.0f - shimBlend) + shimFeedbackL * shimBlend;
+        const float fdnInputR = wetR * (1.0f - shimBlend) + shimFeedbackR * shimBlend;
+
         // Apply per-tap damping LP, LF tracking LP, decay color blend, then write back
-        // Taps 0-3 are driven by wetL, taps 4-7 by wetR
+        // Taps 0-3 are driven by fdnInputL, taps 4-7 by fdnInputR
         for (int i = 0; i < kNumTaps; ++i)
         {
             // HF damping LP (existing) — higher damping = more HF removed from feedback
@@ -145,14 +242,39 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
                 fbSig = fdnDampState[i] * (1.0f + params.decayColor) + fdnLFState[i] * (-params.decayColor);
 
             const float fb    = params.freeze ? v[i] : fbSig * fdnG[i];
-            const float input = (i < kNumTaps / 2) ? wetL : wetR;
+            const float input = (i < kNumTaps / 2) ? fdnInputL : fdnInputR;
             fdnLines[i].write (input + fb);
         }
 
         // Output: first half of taps → L, second half → R
-        // The Householder cross-coupling decorrelates them naturally
         wetL = (y[0] + y[1] + y[2] + y[3]) * 0.25f;
         wetR = (y[4] + y[5] + y[6] + y[7]) * 0.25f;
+
+        // ── Shimmer: compute pitch-shifted feedback for next sample ───────
+        // Granular pitch shifter gives musical interval shimmer.
+        // SSB frequency shifter adds inharmonic drift and beating.
+        // shimmerChar blends between pure granular and 50/50 hybrid.
+        if (params.shimmer > 0.001f)
+        {
+            const float phaseInc = twoPi * params.shimmerShiftHz / sr;
+            const float charAmt  = params.shimmerChar;
+
+            const float granL = granular[0].process (wetL, params.shimmerPitch);
+            const float granR = granular[1].process (wetR, params.shimmerPitch);
+            const float ssbL  = ssb[0].process (wetL, phaseInc);
+            const float ssbR  = ssb[1].process (wetR, phaseInc);
+
+            // charAmt=0 → pure granular; charAmt=1 → 50/50 granular+SSB blend
+            shimFeedbackL = granL * (1.0f - charAmt * 0.5f) + ssbL * (charAmt * 0.5f);
+            shimFeedbackR = granR * (1.0f - charAmt * 0.5f) + ssbR * (charAmt * 0.5f);
+        }
+        else
+        {
+            // Keep buffers advancing silently so there's no stale-data pop on enable
+            granular[0].process (wetL, params.shimmerPitch);
+            granular[1].process (wetR, params.shimmerPitch);
+            shimFeedbackL = shimFeedbackR = 0.0f;
+        }
 
         // ── Stage 4: All-pass filter chain (2 in series per channel) ──────
         // Each filter: flat magnitude, complex phase — increases echo density

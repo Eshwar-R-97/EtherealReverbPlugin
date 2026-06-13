@@ -56,6 +56,22 @@ juce::AudioProcessorValueTreeState::ParameterLayout EtherealReverbProcessor::cre
         juce::ParameterID { ParamID::decayColor, 1 }, "Decay Color",
         juce::NormalisableRange<float> (-1.0f, 1.0f, 0.01f), 0.0f));
 
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::shimmer, 1 }, "Shimmer",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::shimmerPitch, 1 }, "Shimmer Pitch",
+        juce::NormalisableRange<float> (0.5f, 3.0f, 0.01f), 2.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::shimmerChar, 1 }, "Shimmer Character",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.3f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::shimmerShiftHz, 1 }, "Shimmer Shift Hz",
+        juce::NormalisableRange<float> (5.0f, 50.0f, 0.5f), 15.0f));
+
     params.push_back (std::make_unique<juce::AudioParameterBool> (
         juce::ParameterID { ParamID::freeze, 1 }, "Freeze", false));
 
@@ -104,8 +120,12 @@ void EtherealReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     params.modDepth  = apvts.getRawParameterValue (ParamID::modDepth)->load();
     params.tiltEQ     = apvts.getRawParameterValue (ParamID::tiltEQ)->load();
     params.mix        = apvts.getRawParameterValue (ParamID::mix)->load();
-    params.decayColor = apvts.getRawParameterValue (ParamID::decayColor)->load();
-    params.freeze     = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
+    params.decayColor     = apvts.getRawParameterValue (ParamID::decayColor)->load();
+    params.shimmer        = apvts.getRawParameterValue (ParamID::shimmer)->load();
+    params.shimmerPitch   = apvts.getRawParameterValue (ParamID::shimmerPitch)->load();
+    params.shimmerChar    = apvts.getRawParameterValue (ParamID::shimmerChar)->load();
+    params.shimmerShiftHz = apvts.getRawParameterValue (ParamID::shimmerShiftHz)->load();
+    params.freeze         = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
 
     dspEngine.process (buffer, params);
 }
