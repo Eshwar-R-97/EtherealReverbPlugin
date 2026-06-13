@@ -69,7 +69,9 @@ void EtherealLookAndFeel::drawRotarySlider (juce::Graphics& g,
         juce::Path valueArc;
         valueArc.addArc (cx - arcR, cy - arcR, arcR * 2.0f, arcR * 2.0f,
                          rotaryStartAngle, angle, true);
-        g.setColour (juce::Colour (kAccent));
+        const juce::Colour arcColour = juce::Colour (kAccent)
+            .interpolatedWith (juce::Colour (0xff40ff40), psychedelicBlend);
+        g.setColour (arcColour);
         g.strokePath (valueArc, juce::PathStrokeType (2.5f,
             juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
@@ -81,11 +83,15 @@ void EtherealLookAndFeel::drawRotarySlider (juce::Graphics& g,
     g.setColour (juce::Colours::black.withAlpha (0.55f));
     g.fillEllipse (cx - bodyR + 2.5f, cy - bodyR + 2.5f, bodyR * 2.0f, bodyR * 2.0f);
 
-    // Body radial gradient (lighter upper-left, darker lower-right)
+    // Body radial gradient — subtly redder in psychedelic mode
     {
+        const juce::Colour bodyHi = juce::Colour (0xff3a3a50)
+            .interpolatedWith (juce::Colour (0xff4a2828), psychedelicBlend);
+        const juce::Colour bodyLo = juce::Colour (0xff161626)
+            .interpolatedWith (juce::Colour (0xff200808), psychedelicBlend);
         juce::ColourGradient bodyGrad (
-            juce::Colour (0xff3a3a50), cx - bodyR * 0.25f, cy - bodyR * 0.3f,
-            juce::Colour (0xff161626), cx + bodyR * 0.25f, cy + bodyR * 0.35f,
+            bodyHi, cx - bodyR * 0.25f, cy - bodyR * 0.3f,
+            bodyLo, cx + bodyR * 0.25f, cy + bodyR * 0.35f,
             true);
         g.setGradientFill (bodyGrad);
         g.fillEllipse (cx - bodyR, cy - bodyR, bodyR * 2.0f, bodyR * 2.0f);
@@ -124,22 +130,32 @@ void EtherealLookAndFeel::drawToggleButton (juce::Graphics& g,
     juce::ToggleButton& button,
     bool shouldDrawButtonAsHighlighted, bool)
 {
-    const bool  on     = button.getToggleState();
-    const auto  bounds = button.getLocalBounds().toFloat().reduced (2.5f);
-    const float corner = 9.0f;
+    const bool  on        = button.getToggleState();
+    const bool  isReverse = button.getButtonText().contains ("REVERSE");
+    const auto  bounds    = button.getLocalBounds().toFloat().reduced (2.5f);
+    const float corner    = 9.0f;
+
+    // On-state colours differ per button type
+    const juce::Colour onHi  = isReverse ? juce::Colour (0xff0a3010) : juce::Colour (0xffb81c1c);
+    const juce::Colour onLo  = isReverse ? juce::Colour (0xff051808) : juce::Colour (0xff7a0808);
+    const juce::Colour onLED = isReverse ? juce::Colour (0xff28ff50) : juce::Colour (0xffff2828);
+    const juce::Colour onOutline = isReverse ? juce::Colour (0xff20ff40).withAlpha (0.9f)
+                                             : juce::Colour (kFreeze).withAlpha (0.9f);
+    const juce::Colour onGlow1   = isReverse ? juce::Colour (0x3800ff40) : juce::Colour (0x38ff1a1a);
+    const juce::Colour onGlow2   = isReverse ? juce::Colour (0x7000ff50) : juce::Colour (0x70ff3030);
 
     // ── Body gradient ─────────────────────────────────────────────────────
     {
         juce::ColourGradient bodyGrad (
-            on ? juce::Colour (0xffb81c1c) : juce::Colour (0xff222234),
+            on ? onHi : juce::Colour (0xff222234),
             bounds.getX(), bounds.getY(),
-            on ? juce::Colour (0xff7a0808) : juce::Colour (0xff0f0f1e),
+            on ? onLo : juce::Colour (0xff0f0f1e),
             bounds.getX(), bounds.getBottom(), false);
         g.setGradientFill (bodyGrad);
         g.fillRoundedRectangle (bounds, corner);
     }
 
-    // Top-edge highlight (physical raised 3-D effect)
+    // Top-edge highlight
     {
         auto topStrip = bounds.withHeight (bounds.getHeight() * 0.38f);
         juce::ColourGradient hl (
@@ -150,7 +166,7 @@ void EtherealLookAndFeel::drawToggleButton (juce::Graphics& g,
     }
 
     // Outline
-    g.setColour (on ? juce::Colour (kFreeze).withAlpha (0.9f)
+    g.setColour (on ? onOutline
                     : juce::Colour (shouldDrawButtonAsHighlighted ? 0xff4a4a62u : 0xff2e2e44u));
     g.drawRoundedRectangle (bounds, corner, 1.5f);
 
@@ -161,13 +177,13 @@ void EtherealLookAndFeel::drawToggleButton (juce::Graphics& g,
 
     if (on)
     {
-        g.setColour (juce::Colour (0x38ff1a1a));
+        g.setColour (onGlow1);
         g.fillEllipse (ledCX - ledR * 2.4f, ledCY - ledR * 2.4f, ledR * 4.8f, ledR * 4.8f);
-        g.setColour (juce::Colour (0x70ff3030));
+        g.setColour (onGlow2);
         g.fillEllipse (ledCX - ledR * 1.5f, ledCY - ledR * 1.5f, ledR * 3.0f, ledR * 3.0f);
     }
 
-    g.setColour (on ? juce::Colour (0xffff2828) : juce::Colour (0xff262636));
+    g.setColour (on ? onLED : juce::Colour (0xff262636));
     g.fillEllipse (ledCX - ledR, ledCY - ledR, ledR * 2.0f, ledR * 2.0f);
 
     // LED specular dot
@@ -299,6 +315,9 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     freezeButton.setButtonText ("  FREEZE");
     addAndMakeVisible (freezeButton);
 
+    reverseButton.setButtonText ("  REVERSE");
+    addAndMakeVisible (reverseButton);
+
     for (int i = 0; i < (int) kPresets.size(); ++i)
         presetBox.addItem (kPresets[(size_t) i].name, i + 1);
     presetBox.setSelectedId (1, juce::dontSendNotification);
@@ -323,6 +342,7 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     shimmerShiftHzAttach = std::make_unique<SliderAttachment>   (apvts, ParamID::shimmerShiftHz, shimmerShiftHzKnob);
     shimmerVoicesAttach  = std::make_unique<ComboBoxAttachment> (apvts, ParamID::shimmerVoices,  shimmerVoicesBox);
     freezeAttach         = std::make_unique<ButtonAttachment>   (apvts, ParamID::freeze,         freezeButton);
+    reverseAttach        = std::make_unique<ButtonAttachment>   (apvts, ParamID::reverse,        reverseButton);
 
     startTimerHz (20);
 }
@@ -331,6 +351,24 @@ EtherealReverbEditor::~EtherealReverbEditor()
 {
     stopTimer();
     setLookAndFeel (nullptr);
+}
+
+void EtherealReverbEditor::timerCallback()
+{
+    // Animate psychedelic blend toward target based on Reverse button state
+    const bool revActive = processorRef.apvts
+        .getRawParameterValue (ParamID::reverse)->load() > 0.5f;
+    const float target = revActive ? 1.0f : 0.0f;
+    const float step   = 0.08f;  // ~625ms full transition at 20Hz
+    psychedelicBlend = juce::jlimit (0.0f, 1.0f,
+        psychedelicBlend + (target > psychedelicBlend ? step : -step));
+    laf.psychedelicBlend = psychedelicBlend;
+
+    // Dynamic label for pre-delay knob
+    preDelayLabel.setText (revActive ? "REV TIME" : "PRE-DELAY",
+                           juce::dontSendNotification);
+
+    repaint();
 }
 
 void EtherealReverbEditor::setupKnob (juce::Slider& knob, juce::Label& label,
@@ -455,9 +493,11 @@ void EtherealReverbEditor::resized()
         }
     }
 
-    // ── Freeze button — below the visualization screen ────────────────────
-    constexpr int freezeW = 230, freezeH = 50;
-    freezeButton.setBounds (400 - freezeW / 2, 400, freezeW, freezeH);
+    // ── Freeze + Reverse buttons — side by side below the visualization ───
+    constexpr int btnW = 175, btnH = 50, btnGap = 8;
+    const int btnStartX = 400 - (btnW * 2 + btnGap) / 2;
+    freezeButton.setBounds  (btnStartX,                400, btnW, btnH);
+    reverseButton.setBounds (btnStartX + btnW + btnGap, 400, btnW, btnH);
 }
 
 void EtherealReverbEditor::paint (juce::Graphics& g)
@@ -465,60 +505,85 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     const int W = getWidth();
     const int H = getHeight();
 
+    // Helper: interpolate between normal and psychedelic colours
+    auto blendCol = [&] (juce::uint32 normal, juce::uint32 psycho) -> juce::Colour
+    {
+        return juce::Colour (normal).interpolatedWith (juce::Colour (psycho), psychedelicBlend);
+    };
+
     // ── Background gradient ───────────────────────────────────────────────
     {
-        juce::ColourGradient bg (
-            juce::Colour (0xff090916), 0.0f, 0.0f,
-            juce::Colour (0xff040408), 0.0f, (float) H, false);
+        const juce::Colour bgTop = blendCol (0xff090916, 0xff1a0608);
+        const juce::Colour bgBot = blendCol (0xff040408, 0xff030c02);
+        juce::ColourGradient bg (bgTop, 0.0f, 0.0f, bgBot, 0.0f, (float) H, false);
         g.setGradientFill (bg);
         g.fillAll();
     }
 
-    // Radial vignette (darkens corners)
+    // Radial vignette — in psychedelic mode takes on a red/green tint
     {
+        const juce::Colour vigEdge = blendCol (0x66000000, 0x55100400);
         juce::ColourGradient vig (
             juce::Colours::transparentBlack, (float) W * 0.5f, (float) H * 0.4f,
-            juce::Colours::black.withAlpha (0.40f), 0.0f, 0.0f, true);
+            vigEdge, 0.0f, 0.0f, true);
         g.setGradientFill (vig);
         g.fillAll();
+    }
+
+    // Psychedelic pulsing rings (only visible when blend > 0)
+    if (psychedelicBlend > 0.0f)
+    {
+        const double now = juce::Time::getMillisecondCounterHiRes() * 0.001;
+        const float cx   = (float) W * 0.5f;
+        const float cy   = (float) H * 0.47f;
+        for (int ring = 0; ring < 4; ++ring)
+        {
+            const float phase = (float) std::fmod (now * 0.25 + ring * 0.25, 1.0);
+            const float r     = 60.0f + phase * (float) W * 0.65f;
+            const float alpha = psychedelicBlend * (1.0f - phase) * 0.055f;
+            const juce::Colour rc = (ring % 2 == 0)
+                ? juce::Colour (0xffff1a30).withAlpha (alpha)
+                : juce::Colour (0xff20ff50).withAlpha (alpha);
+            g.setColour (rc);
+            g.drawEllipse (cx - r, cy - r * 0.55f, r * 2.0f, r * 1.1f, 1.2f);
+        }
     }
 
     // ── Left panel background ─────────────────────────────────────────────
     {
         juce::ColourGradient pg (
-            juce::Colour (0xff0f0f1e), 5.0f, 65.0f,
-            juce::Colour (0xff080810), 210.0f, 65.0f, false);
+            blendCol (0xff0f0f1e, 0xff1a0608), 5.0f, 65.0f,
+            blendCol (0xff080810, 0xff0e0404), 210.0f, 65.0f, false);
         g.setGradientFill (pg);
         g.fillRoundedRectangle (5.0f, 65.0f, 205.0f, (float) H - 82.0f, 6.0f);
-        g.setColour (juce::Colour (0xff1a1a30));
+        g.setColour (blendCol (0xff1a1a30, 0xff400808));
         g.drawRoundedRectangle (5.0f, 65.0f, 205.0f, (float) H - 82.0f, 6.0f, 1.0f);
     }
 
     g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.5f).withStyle ("Bold")));
-    g.setColour (juce::Colour (EtherealLookAndFeel::kAccent).withAlpha (0.65f));
+    g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.65f));
     g.drawText ("SPACE", 5, 70, 205, 13, juce::Justification::centred, false);
 
     // ── Right panel background ────────────────────────────────────────────
     {
         juce::ColourGradient pg (
-            juce::Colour (0xff0f0f1e), 588.0f, 65.0f,
-            juce::Colour (0xff080810), 797.0f, 65.0f, false);
+            blendCol (0xff0f0f1e, 0xff1a0608), 588.0f, 65.0f,
+            blendCol (0xff080810, 0xff0e0404), 797.0f, 65.0f, false);
         g.setGradientFill (pg);
         g.fillRoundedRectangle (588.0f, 65.0f, 207.0f, (float) H - 82.0f, 6.0f);
-        g.setColour (juce::Colour (0xff1a1a30));
+        g.setColour (blendCol (0xff1a1a30, 0xff400808));
         g.drawRoundedRectangle (588.0f, 65.0f, 207.0f, (float) H - 82.0f, 6.0f, 1.0f);
     }
 
     g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.5f).withStyle ("Bold")));
-    g.setColour (juce::Colour (EtherealLookAndFeel::kAccent).withAlpha (0.65f));
+    g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.65f));
     g.drawText ("CHARACTER & MOTION", 588, 70, 207, 13, juce::Justification::centred, false);
 
     // Right panel section sub-headers
     g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
-    g.setColour (juce::Colour (EtherealLookAndFeel::kAccent).withAlpha (0.40f));
+    g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.40f));
     g.drawText ("TEXTURE",  588, 244, 207, 11, juce::Justification::centred, false);
-    // Thin separator above TEXTURE section (SHIMMER header is drawn by shimmerExpandBtn)
-    g.setColour (juce::Colour (0xff1a1a30));
+    g.setColour (blendCol (0xff1a1a30, 0xff300808));
     g.drawLine (594.0f, 242.0f, 789.0f, 242.0f, 0.75f);
 
     // VOICES sub-label (only when shimmer is expanded)
@@ -527,12 +592,12 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colour (0xff8040ff).withAlpha (0.35f));
         g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
         g.drawText ("VOICES", 588, 479, 207, 11, juce::Justification::centred, false);
-        g.setColour (juce::Colour (0xff1a1a30));
+        g.setColour (blendCol (0xff1a1a30, 0xff300808));
         g.drawLine (594.0f, 477.0f, 789.0f, 477.0f, 0.75f);
     }
 
     // ── Header divider ────────────────────────────────────────────────────
-    g.setColour (juce::Colour (EtherealLookAndFeel::kAccentDim));
+    g.setColour (blendCol (EtherealLookAndFeel::kAccentDim, 0xff300808));
     g.drawLine (0.0f, 62.0f, (float) W, 62.0f, 1.0f);
 
     // ── Title "EtherealReverb" — sine-wave gradient fill inside letters ───
@@ -549,12 +614,13 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         g.saveState();
         g.reduceClipRegion (textPath);
 
-        juce::ColourGradient titleGrad (
-            juce::Colour (0xff1a52a8), 18.0f,  4.0f,
-            juce::Colour (0xff000018), 18.0f, 58.0f, false);
+        const juce::Colour titleTop = blendCol (0xff1a52a8, 0xffb01030);
+        const juce::Colour titleBot = blendCol (0xff000018, 0xff050e02);
+        juce::ColourGradient titleGrad (titleTop, 18.0f, 4.0f, titleBot, 18.0f, 58.0f, false);
         g.setGradientFill (titleGrad);
         g.fillRect (8, 0, 530, 62);
 
+        const juce::Colour waveCol = blendCol (0xff3a7ae0, 0xffcc2040);
         for (float fy = 1.0f; fy < 62.0f; fy += 3.2f)
         {
             juce::Path sinPath;
@@ -569,13 +635,13 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
             }
             const float t     = fy / 62.0f;
             const float alpha = 0.22f + 0.16f * std::sin (t * juce::MathConstants<float>::twoPi);
-            g.setColour (juce::Colour (0xff3a7ae0).withAlpha (alpha));
+            g.setColour (waveCol.withAlpha (alpha));
             g.strokePath (sinPath, juce::PathStrokeType (0.75f));
         }
 
         g.restoreState();
 
-        g.setColour (juce::Colour (0xff2050a0).withAlpha (0.55f));
+        g.setColour (blendCol (0xff2050a0, 0xff801828).withAlpha (0.55f));
         g.strokePath (textPath, juce::PathStrokeType (0.5f));
 
         g.setFont (juce::Font (juce::FontOptions{}.withHeight (10.5f)));
@@ -604,10 +670,13 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colour (0xff030509));
         g.fillRoundedRectangle (scX, scY, scW, scH, scCorner);
 
-        // Scanlines
-        g.setColour (juce::Colour (0x07ffffff));
-        for (float gy = scY + 2.0f; gy < scY + scH - 1.0f; gy += 3.0f)
-            g.drawLine (scX + 2.0f, gy, scX + scW - 2.0f, gy, 1.0f);
+        // Scanlines — tint shifts from white to red/green in psychedelic mode
+        {
+            const juce::Colour scanCol = blendCol (0x07ffffff, 0x08ff2020);
+            g.setColour (scanCol);
+            for (float gy = scY + 2.0f; gy < scY + scH - 1.0f; gy += 3.0f)
+                g.drawLine (scX + 2.0f, gy, scX + scW - 2.0f, gy, 1.0f);
+        }
 
         // Grid
         g.setColour (juce::Colour (0x14004845));
@@ -682,12 +751,46 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 const float bx   = scX + margin + (float) px;
 
                 const float barAlpha = frozen ? 0.30f : amp * 0.45f;
-                const juce::Colour barCol = frozen
-                    ? juce::Colour (0xffffaa00).withAlpha (barAlpha)
-                    : juce::Colour (0xff00b4ff).withAlpha (barAlpha);
+                juce::Colour barCol;
+                if (frozen)
+                    barCol = juce::Colour (0xffffaa00).withAlpha (barAlpha);
+                else
+                    barCol = blendCol (0xff00b4ff, 0xffff2040).withAlpha (barAlpha);
                 g.setColour (barCol);
                 g.drawLine (bx, midY, bx, midY - barH * n1, 1.0f);
                 g.drawLine (bx, midY, bx, midY + barH * n2, 1.0f);
+            }
+
+            // Reverse swell curve — visible when psychedelicBlend > 0
+            if (psychedelicBlend > 0.0f && !frozen)
+            {
+                const float revTimeMs   = apvts.getRawParameterValue (ParamID::preDelay)->load();
+                const float revTimeSecs = revTimeMs * 0.001f;
+                juce::Path revCurve;
+                bool revStarted = false;
+                for (int i = 0; i <= 400; ++i)
+                {
+                    const float t     = (float) i / 400.0f;
+                    const float tSecs = t * windowSecs;
+                    float amp;
+                    if (revTimeSecs < 0.001f)
+                        amp = envelope (tSecs);
+                    else if (tSecs < revTimeSecs)
+                        amp = tSecs / revTimeSecs;
+                    else
+                        amp = envelope (tSecs);
+                    const float px = scX + margin + t * cW;
+                    const float py = botY - amp * cH;
+                    if (!revStarted) { revCurve.startNewSubPath (px, botY); revStarted = true; }
+                    revCurve.lineTo (px, py);
+                }
+                const float ra = psychedelicBlend * 0.90f;
+                g.setColour (juce::Colour (0xffff2040).withAlpha (ra * 0.08f));
+                g.strokePath (revCurve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
+                g.setColour (juce::Colour (0xff40ff60).withAlpha (ra * 0.18f));
+                g.strokePath (revCurve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
+                g.setColour (juce::Colour (0xffff3050).withAlpha (ra));
+                g.strokePath (revCurve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
             }
 
             // Frequency-dependent decay curves
@@ -819,9 +922,10 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
 
             // Labels
             g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
-            g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
-            const juce::String decayStr = frozen ? "FROZEN"
-                                                 : juce::String (decayTime, 1) + "s RT60";
+            g.setColour (blendCol (EtherealLookAndFeel::kTextDim, 0xff206820));
+            const juce::String decayStr = frozen   ? "FROZEN"
+                : (psychedelicBlend > 0.5f ? juce::String ((int) preDelayMs) + "ms REV"
+                                           : juce::String (decayTime, 1) + "s RT60");
             g.drawText (decayStr, (int)(scX + scW - 72.0f), (int) scY + 6, 64, 10,
                         juce::Justification::right, false);
 
@@ -846,15 +950,16 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         }
 
         // Screen border
-        g.setColour (juce::Colour (EtherealLookAndFeel::kAccentDim));
+        g.setColour (blendCol (EtherealLookAndFeel::kAccentDim, 0xff203820));
         g.drawRoundedRectangle (scX, scY, scW, scH, scCorner, 1.5f);
 
-        g.setColour (juce::Colour (0x1affffff));
+        g.setColour (blendCol (0x1affffff, 0x1a80ff80));
         g.drawRoundedRectangle (scX + 1.5f, scY + 1.5f, scW - 3.0f, scH - 3.0f, scCorner - 1.0f, 0.5f);
 
         g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
-        g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
-        g.drawText ("DECAY VISUALIZATION", (int) scX + 8, (int) scY + 6, 200, 10,
+        g.setColour (blendCol (EtherealLookAndFeel::kTextDim, 0xff206820));
+        const juce::String screenTitle = psychedelicBlend > 0.5f ? "REVERSE REALM" : "DECAY VISUALIZATION";
+        g.drawText (screenTitle, (int) scX + 8, (int) scY + 6, 200, 10,
                     juce::Justification::left, false);
     }
 

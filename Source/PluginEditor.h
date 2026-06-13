@@ -58,6 +58,8 @@ public:
     static constexpr juce::uint32 kText       = 0xffe0e0ec;
     static constexpr juce::uint32 kTextDim    = 0xff484860;
     static constexpr juce::uint32 kTrack      = 0xff1a1a2c;
+
+    float psychedelicBlend { 0.0f };  // 0 = normal, 1 = full psychedelic mode
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,7 +78,7 @@ public:
 private:
     void setupKnob    (juce::Slider&, juce::Label&, const juce::String& labelText);
     void applyPreset  (int index);
-    void timerCallback() override { repaint(); }
+    void timerCallback() override;
 
     EtherealReverbProcessor& processorRef;
     EtherealLookAndFeel      laf;
@@ -103,8 +105,9 @@ private:
     juce::ComboBox shimmerVoicesBox;
     juce::Label    shimmerVoicesLabel;
 
-    // ── Freeze toggle ──────────────────────────────────────────────────────
+    // ── Freeze / Reverse toggles ───────────────────────────────────────────
     juce::ToggleButton freezeButton;
+    juce::ToggleButton reverseButton;
 
     // ── Preset dropdown ────────────────────────────────────────────────────
     juce::ComboBox presetBox;
@@ -122,6 +125,10 @@ private:
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
     std::unique_ptr<ComboBoxAttachment> shimmerVoicesAttach;
     std::unique_ptr<ButtonAttachment>   freezeAttach;
+    std::unique_ptr<ButtonAttachment>   reverseAttach;
+
+    // ── Psychedelic UI animation ───────────────────────────────────────────
+    float psychedelicBlend { 0.0f };  // 0 = normal, 1 = full psychedelic
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EtherealReverbEditor)
 };
