@@ -99,7 +99,7 @@ private:
 
     // ── Shimmer expand toggle ─────────────────────────────────────────────
     juce::TextButton   shimmerExpandBtn;
-    bool               shimmerExpanded { false };
+    bool               shimmerExpanded { true };
 
     // ── Shimmer voices dropdown ───────────────────────────────────────────
     juce::ComboBox shimmerVoicesBox;

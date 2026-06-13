@@ -308,7 +308,7 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     setupKnob (shimmerCharKnob,   shimmerCharLabel,   "CHARACTER");
     setupKnob (shimmerShiftHzKnob, shimmerShiftHzLabel, "SHIFT HZ");
 
-    shimmerExpandBtn.setButtonText ("SHIMMER  \xe2\x96\xb6");
+    shimmerExpandBtn.setButtonText ("SHIMMER  \xe2\x96\xbc");
     shimmerExpandBtn.onClick = [this]
     {
         shimmerExpanded = !shimmerExpanded;
@@ -522,18 +522,20 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     {
         return juce::Colour (normal).interpolatedWith (juce::Colour (psycho), psychedelicBlend);
     };
-    // psychoAt: red (top) → green (bottom) gradient at a given y fraction
+    // psychoAt: dark navy → dark forest green across the y axis
     auto psychoAt = [&] (float yFrac) -> juce::Colour
     {
-        return juce::Colour (0xff2a0808).interpolatedWith (juce::Colour (0xff082a08), yFrac);
+        return juce::Colour (0xff080e08).interpolatedWith (juce::Colour (0xff061606), yFrac);
     };
 
-    // ── Background — full crimson→green gradient in psycho mode ──────────
+    // ── Background — static gradient; psycho mode shifts to deep green ────
+    // The background does NOT animate (no time-dependent values here) to
+    // prevent flicker on every repaint. Only the ring overlay animates.
     {
         const juce::Colour bgTop = juce::Colour (0xff090916)
-            .interpolatedWith (psychoAt (0.0f), psychedelicBlend);
+            .interpolatedWith (juce::Colour (0xff0a1a0a), psychedelicBlend);
         const juce::Colour bgBot = juce::Colour (0xff040408)
-            .interpolatedWith (psychoAt (1.0f), psychedelicBlend);
+            .interpolatedWith (juce::Colour (0xff030e03), psychedelicBlend);
         juce::ColourGradient bg (bgTop, 0.0f, 0.0f, bgBot, 0.0f, fH, false);
         g.setGradientFill (bg);
         g.fillAll();
@@ -541,7 +543,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
 
     // Radial vignette
     {
-        const juce::Colour vigEdge = blendCol (0x66000000, 0x44000800);
+        const juce::Colour vigEdge = blendCol (0x66000000, 0x55000a00);
         juce::ColourGradient vig (juce::Colours::transparentBlack,
                                   fW * 0.5f, fH * 0.42f,
                                   vigEdge, 0.0f, 0.0f, true);
@@ -549,19 +551,19 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         g.fillAll();
     }
 
-    // Psychedelic pulsing rings
+    // Slow green ripple rings — only the rings animate, not the background
     if (psychedelicBlend > 0.0f)
     {
         const double now = juce::Time::getMillisecondCounterHiRes() * 0.001;
         const float  cx  = fW * 0.5f, cy = fH * 0.47f;
-        for (int ring = 0; ring < 4; ++ring)
+        for (int ring = 0; ring < 3; ++ring)
         {
-            const float phase = (float) std::fmod (now * 0.22 + ring * 0.25, 1.0);
-            const float r     = 55.0f + phase * fW * 0.70f;
-            const float alpha = psychedelicBlend * (1.0f - phase) * 0.07f;
-            g.setColour ((ring % 2 == 0 ? juce::Colour (0xffff1a30)
-                                        : juce::Colour (0xff20ff50)).withAlpha (alpha));
-            g.drawEllipse (cx - r, cy - r * 0.55f, r * 2.0f, r * 1.1f, 1.3f);
+            // Slow expansion: full cycle every ~6 seconds per ring
+            const float phase = (float) std::fmod (now * 0.165 + ring * 0.333, 1.0);
+            const float r     = 40.0f + phase * fW * 0.72f;
+            const float alpha = psychedelicBlend * (1.0f - phase) * 0.06f;
+            g.setColour (juce::Colour (0xff20ff60).withAlpha (alpha));
+            g.drawEllipse (cx - r, cy - r * 0.55f, r * 2.0f, r * 1.1f, 1.2f);
         }
     }
 
@@ -796,7 +798,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 if (frozen)
                     barCol = juce::Colour (0xffffaa00).withAlpha (barAlpha);
                 else
-                    barCol = blendCol (0xff00b4ff, 0xffff2040).withAlpha (barAlpha);
+                    barCol = blendCol (0xff00b4ff, 0xff20ff60).withAlpha (barAlpha);
                 g.setColour (barCol);
                 g.drawLine (bx, midY, bx, midY - barH * n1, 1.0f);
                 g.drawLine (bx, midY, bx, midY + barH * n2, 1.0f);
@@ -948,12 +950,15 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                         if (!started) { curve.startNewSubPath (px, botY); started = true; }
                         curve.lineTo (px, py);
                     }
-                    g.setColour (juce::Colour (0xff00b4ff).withAlpha (0.08f));
-                    g.strokePath (curve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
-                    g.setColour (juce::Colour (0xff00b4ff).withAlpha (0.18f));
-                    g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
-                    g.setColour (juce::Colour (0xff00b4ff).withAlpha (0.92f));
-                    g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
+                    {
+                        const juce::Colour curveCol = blendCol (0xff00b4ff, 0xff20ff60);
+                        g.setColour (curveCol.withAlpha (0.08f));
+                        g.strokePath (curve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
+                        g.setColour (curveCol.withAlpha (0.18f));
+                        g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
+                        g.setColour (curveCol.withAlpha (0.92f));
+                        g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
+                    }
                 }
             }
 
