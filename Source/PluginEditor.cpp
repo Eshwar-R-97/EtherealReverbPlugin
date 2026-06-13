@@ -451,6 +451,11 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         // Subtle path outline for sharpness
         g.setColour (juce::Colour (0xff2050a0).withAlpha (0.55f));
         g.strokePath (textPath, juce::PathStrokeType (0.5f));
+
+        // Byline
+        g.setFont (juce::Font (juce::FontOptions{}.withHeight (10.5f)));
+        g.setColour (juce::Colour (0xff505068));
+        g.drawText ("by Eshwar", 22, 47, 200, 13, juce::Justification::centredLeft, false);
     }
 
     // ── Decay visualization screen ────────────────────────────────────────
