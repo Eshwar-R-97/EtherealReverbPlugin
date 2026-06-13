@@ -182,6 +182,29 @@ void EtherealLookAndFeel::drawToggleButton (juce::Graphics& g,
                 juce::Justification::centred, false);
 }
 
+void EtherealLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& btn,
+    const juce::Colour&, bool isHighlighted, bool)
+{
+    const auto b = btn.getLocalBounds().toFloat();
+    // Subtle separator line across the top
+    g.setColour (juce::Colour (0xff1a1a30));
+    g.drawLine (b.getX() + 6.0f, b.getY(), b.getRight() - 6.0f, b.getY(), 0.75f);
+    // Very faint highlight tint on hover
+    if (isHighlighted)
+    {
+        g.setColour (juce::Colour (0xff8040ff).withAlpha (0.07f));
+        g.fillRoundedRectangle (b, 3.0f);
+    }
+}
+
+void EtherealLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& btn,
+    bool, bool)
+{
+    g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
+    g.setColour (juce::Colour (0xff8040ff).withAlpha (btn.isMouseOver() ? 0.85f : 0.55f));
+    g.drawText (btn.getButtonText(), btn.getLocalBounds(), juce::Justification::centred, false);
+}
+
 void EtherealLookAndFeel::drawComboBox (juce::Graphics& g, int width, int height,
     bool, int, int, int, int, juce::ComboBox&)
 {
@@ -246,6 +269,17 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     setupKnob (shimmerPitchKnob,  shimmerPitchLabel,  "PITCH");
     setupKnob (shimmerCharKnob,   shimmerCharLabel,   "CHARACTER");
     setupKnob (shimmerShiftHzKnob, shimmerShiftHzLabel, "SHIFT HZ");
+
+    shimmerExpandBtn.setButtonText ("SHIMMER  \xe2\x96\xb6");
+    shimmerExpandBtn.onClick = [this]
+    {
+        shimmerExpanded = !shimmerExpanded;
+        shimmerExpandBtn.setButtonText (shimmerExpanded ? "SHIMMER  \xe2\x96\xbc"
+                                                        : "SHIMMER  \xe2\x96\xb6");
+        resized();
+        repaint();
+    };
+    addAndMakeVisible (shimmerExpandBtn);
 
     shimmerVoicesBox.addItem ("1 Voice  — root only",               1);
     shimmerVoicesBox.addItem ("2 Voices — + fifth",                 2);
@@ -377,31 +411,48 @@ void EtherealReverbEditor::resized()
         decayColorLabel.setBounds (rPanelX, ky + sz + 4, 207, 14);
     }
 
-    // Row 4 — Shimmer, ShimmerPitch, ShimmerChar (knobSz=50)
+    // SHIMMER expand button (always visible as section header)
+    shimmerExpandBtn.setBounds (rPanelX, 334, 207, 18);
+
+    // Shimmer controls — only visible when expanded
     {
-        constexpr int ky = 350, sz = 50;
-        juce::Slider* knobs[]  = { &shimmerKnob,  &shimmerPitchKnob, &shimmerCharKnob  };
-        juce::Label*  labels[] = { &shimmerLabel, &shimmerPitchLabel, &shimmerCharLabel };
+        const bool show = shimmerExpanded;
+
+        // Row 4 — Shimmer, ShimmerPitch, ShimmerChar
+        constexpr int ky4 = 358, sz4 = 50;
+        juce::Slider* knobs4[]  = { &shimmerKnob,  &shimmerPitchKnob, &shimmerCharKnob  };
+        juce::Label*  labels4[] = { &shimmerLabel, &shimmerPitchLabel, &shimmerCharLabel };
         for (int col = 0; col < 3; ++col)
         {
-            knobs[col]->setBounds  (rColCX[col] - sz / 2, ky, sz, sz);
-            labels[col]->setBounds (rPanelX + col * rColW, ky + sz + 4, rColW, 14);
+            knobs4[col]->setVisible (show);
+            labels4[col]->setVisible (show);
+            if (show)
+            {
+                knobs4[col]->setBounds  (rColCX[col] - sz4 / 2, ky4, sz4, sz4);
+                labels4[col]->setBounds (rPanelX + col * rColW, ky4 + sz4 + 4, rColW, 14);
+            }
         }
-    }
 
-    // Row 5 — ShimmerShiftHz (centred, knobSz=44)
-    {
-        constexpr int ky = 420, sz = 44;
-        const int kcx = rPanelX + 207 / 2;
-        shimmerShiftHzKnob.setBounds  (kcx - sz / 2, ky, sz, sz);
-        shimmerShiftHzLabel.setBounds (rPanelX, ky + sz + 4, 207, 14);
-    }
+        // Row 5 — ShimmerShiftHz centred
+        constexpr int ky5 = 428, sz5 = 44;
+        shimmerShiftHzKnob.setVisible (show);
+        shimmerShiftHzLabel.setVisible (show);
+        if (show)
+        {
+            const int kcx = rPanelX + 207 / 2;
+            shimmerShiftHzKnob.setBounds  (kcx - sz5 / 2, ky5, sz5, sz5);
+            shimmerShiftHzLabel.setBounds (rPanelX, ky5 + sz5 + 4, 207, 14);
+        }
 
-    // Row 6 — Voices ComboBox (full-width, below shift knob)
-    {
-        constexpr int ky = 488;
-        shimmerVoicesBox.setBounds   (rPanelX + 6, ky,      195, 22);
-        shimmerVoicesLabel.setBounds (rPanelX,      ky - 13, 207, 11);
+        // Row 6 — Voices ComboBox
+        shimmerVoicesBox.setVisible (show);
+        shimmerVoicesLabel.setVisible (show);
+        if (show)
+        {
+            constexpr int ky6 = 492;
+            shimmerVoicesBox.setBounds   (rPanelX + 6, ky6,      195, 22);
+            shimmerVoicesLabel.setBounds (rPanelX,      ky6 - 13, 207, 11);
+        }
     }
 
     // ── Freeze button — below the visualization screen ────────────────────
@@ -466,16 +517,19 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
     g.setColour (juce::Colour (EtherealLookAndFeel::kAccent).withAlpha (0.40f));
     g.drawText ("TEXTURE",  588, 244, 207, 11, juce::Justification::centred, false);
-    g.setColour (juce::Colour (0xff8040ff).withAlpha (0.55f));
-    g.drawText ("SHIMMER",  588, 336, 207, 11, juce::Justification::centred, false);
-    g.setColour (juce::Colour (0xff8040ff).withAlpha (0.35f));
-    g.drawText ("VOICES",   588, 476, 207, 11, juce::Justification::centred, false);
-
-    // Thin separator lines above section headers
+    // Thin separator above TEXTURE section (SHIMMER header is drawn by shimmerExpandBtn)
     g.setColour (juce::Colour (0xff1a1a30));
     g.drawLine (594.0f, 242.0f, 789.0f, 242.0f, 0.75f);
-    g.drawLine (594.0f, 334.0f, 789.0f, 334.0f, 0.75f);
-    g.drawLine (594.0f, 474.0f, 789.0f, 474.0f, 0.75f);
+
+    // VOICES sub-label (only when shimmer is expanded)
+    if (shimmerExpanded)
+    {
+        g.setColour (juce::Colour (0xff8040ff).withAlpha (0.35f));
+        g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
+        g.drawText ("VOICES", 588, 479, 207, 11, juce::Justification::centred, false);
+        g.setColour (juce::Colour (0xff1a1a30));
+        g.drawLine (594.0f, 477.0f, 789.0f, 477.0f, 0.75f);
+    }
 
     // ── Header divider ────────────────────────────────────────────────────
     g.setColour (juce::Colour (EtherealLookAndFeel::kAccentDim));

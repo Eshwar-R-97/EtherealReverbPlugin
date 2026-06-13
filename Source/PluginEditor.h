@@ -28,6 +28,15 @@ public:
                            bool shouldDrawButtonAsHighlighted,
                            bool shouldDrawButtonAsDown) override;
 
+    void drawButtonBackground (juce::Graphics&, juce::Button&,
+                               const juce::Colour& backgroundColour,
+                               bool shouldDrawButtonAsHighlighted,
+                               bool shouldDrawButtonAsDown) override;
+
+    void drawButtonText (juce::Graphics&, juce::TextButton&,
+                         bool shouldDrawButtonAsHighlighted,
+                         bool shouldDrawButtonAsDown) override;
+
     void drawComboBox (juce::Graphics&, int width, int height, bool isButtonDown,
                        int buttonX, int buttonY, int buttonW, int buttonH,
                        juce::ComboBox&) override;
@@ -85,6 +94,10 @@ private:
     juce::Label  modRateLabel,    modDepthLabel,  mixLabel;
     juce::Label  decayColorLabel;
     juce::Label  shimmerLabel, shimmerPitchLabel, shimmerCharLabel, shimmerShiftHzLabel;
+
+    // ── Shimmer expand toggle ─────────────────────────────────────────────
+    juce::TextButton   shimmerExpandBtn;
+    bool               shimmerExpanded { false };
 
     // ── Shimmer voices dropdown ───────────────────────────────────────────
     juce::ComboBox shimmerVoicesBox;
