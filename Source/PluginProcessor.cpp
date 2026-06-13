@@ -72,7 +72,8 @@ bool EtherealReverbProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 {
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
-    if (layouts.getMainInputChannelSet() != layouts.getMainOutputChannelSet())
+    auto in = layouts.getMainInputChannelSet();
+    if (in != juce::AudioChannelSet::stereo() && in != juce::AudioChannelSet::mono())
         return false;
     return true;
 }
@@ -81,6 +82,12 @@ void EtherealReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                              juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Mono input (e.g. standalone mic): duplicate channel 0 into channel 1
+    if (buffer.getNumChannels() == 1)
+        buffer.setSize (2, buffer.getNumSamples(), true, true, true);
+    if (getTotalNumInputChannels() == 1)
+        buffer.copyFrom (1, 0, buffer, 0, 0, buffer.getNumSamples());
 
     // Assemble the parameter bundle — all atomic loads, safe on the audio thread
     DSPParams params;
