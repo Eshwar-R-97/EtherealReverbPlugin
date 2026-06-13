@@ -178,6 +178,10 @@ private:
     std::array<SSBShimmer, 2>                   ssb;
     float shimFeedbackL { 0.0f };
     float shimFeedbackR { 0.0f };
+    // 1-pole HP states on the shimmer feedback path — removes sub-bass that
+    // accumulates in the recirculation loop and causes low-end saturation
+    float shimHPL { 0.0f };
+    float shimHPR { 0.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DSPEngine)
 };

@@ -129,6 +129,7 @@ void DSPEngine::reset()
     for (auto& g : granular)  g.reset();
     for (auto& s : ssb)       s.reset();
     shimFeedbackL = shimFeedbackR = 0.0f;
+    shimHPL       = shimHPR       = 0.0f;
 }
 
 void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& params)
@@ -213,12 +214,20 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         float v[kNumTaps];
         for (int i = 0; i < kNumTaps; ++i) v[i] = y[i] - tapSum;
 
-        // Shimmer morphs the FDN input: blends the dry pre-delay signal with
-        // the pitch-shifted feedback from the previous sample. This creates
-        // a recirculating pitch-rise loop without additive energy growth.
-        const float shimBlend = params.shimmer * 0.6f;
-        const float fdnInputL = wetL * (1.0f - shimBlend) + shimFeedbackL * shimBlend;
-        const float fdnInputR = wetR * (1.0f - shimBlend) + shimFeedbackR * shimBlend;
+        // Shimmer: add pitch-shifted feedback ADDITIVELY at a bounded level.
+        // The FDN output accumulates to much higher amplitude than the dry input
+        // at long decay times, so a blend approach causes instability. Instead:
+        //  1. HP-filter the feedback to prevent sub-bass buildup
+        //  2. tanh-clip to a hard ceiling of ±1 — this is the stability guarantee
+        //  3. Inject at shimmer×0.15 (≈ −16 dB at full), additive on top of dry input
+        const float hpCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 120.0f / sr);
+        shimHPL = hpCoeff * shimHPL + (1.0f - hpCoeff) * shimFeedbackL;
+        shimHPR = hpCoeff * shimHPR + (1.0f - hpCoeff) * shimFeedbackR;
+        const float shimClipL = std::tanh (shimFeedbackL - shimHPL);
+        const float shimClipR = std::tanh (shimFeedbackR - shimHPR);
+        const float shimScale  = params.shimmer * 0.15f;
+        const float fdnInputL  = wetL + shimClipL * shimScale;
+        const float fdnInputR  = wetR + shimClipR * shimScale;
 
         // Apply per-tap damping LP, LF tracking LP, decay color blend, then write back
         // Taps 0-3 are driven by fdnInputL, taps 4-7 by fdnInputR
