@@ -124,6 +124,7 @@ void DSPEngine::reset()
     fdnDampState.fill (0.0f);
     fdnLFState.fill (0.0f);
     tiltState.fill (0.0f);
+    bloomEnv = 0.0f;
     for (int k = 0; k < kNumTaps; ++k)
         lfoPhases[(size_t) k] = (float) k / (float) kNumTaps;
     for (auto& g : granular)  g.reset();
@@ -174,6 +175,10 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     const float householderScale = 2.0f / (float) kNumTaps;
     // LF tracking filter: 1-pole LP at ~300Hz — isolates bass for decay color
     const float lfCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 300.0f / sr);
+
+    // Bloom envelope coefficients — computed once per block
+    const float bloomAttackCoeff  = std::exp (-1.0f / (0.040f * sr)); // 40ms attack
+    const float bloomReleaseCoeff = std::exp (-1.0f / (3.0f  * sr)); // 3s release
 
     // Per-voice shimmer naturalisation — computed once per block
     // Method 1: progressive LP darkening of each harmonic voice
@@ -261,6 +266,11 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
                 fbSig = fdnDampState[i] * (1.0f - params.decayColor) + v[i] * params.decayColor;
             else
                 fbSig = fdnDampState[i] * (1.0f + params.decayColor) + fdnLFState[i] * (-params.decayColor);
+
+            // HF air shelf: adds back ~10% of the high-frequency content that
+            // damping removed. Makes the tail feel airier as it decays.
+            // fdnDampState is a LP of v[i], so (v[i] - fdnDampState) ≈ HF content.
+            fbSig += 0.10f * (v[i] - fdnDampState[i]);
 
             const float fb    = params.freeze ? v[i] : fbSig * fdnG[i];
             const float input = (i < kNumTaps / 2) ? fdnInputL : fdnInputR;
@@ -375,8 +385,17 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         wetR += params.tiltEQ * (tiltState[1] - wetR);
         tiltState[1] = (1.0f - tiltCoeff) * wetR + tiltCoeff * tiltState[1];
 
-        // ── Stage 6: Dry/wet blend (framework territory) ──────────────────
-        left[n]  = dryL + (wetL - dryL) * params.mix;
-        right[n] = dryR + (wetR - dryR) * params.mix;
+        // ── Stage 6: Dry/wet blend with bloom envelope ────────────────────
+        // Bloom: wet signal fades in over ~40ms when a new note arrives,
+        // preventing the reverb from appearing as an instant dense wall.
+        // Release is 3s so the reverb tail is not gated when input stops.
+        const float inputAbs   = (std::abs (dryL) + std::abs (dryR)) * 0.5f;
+        const float bloomTarget = inputAbs > 0.001f ? 1.0f : 0.0f;
+        bloomEnv = bloomTarget > bloomEnv
+            ? bloomAttackCoeff  * bloomEnv + (1.0f - bloomAttackCoeff)  * bloomTarget
+            : bloomReleaseCoeff * bloomEnv + (1.0f - bloomReleaseCoeff) * bloomTarget;
+
+        left[n]  = dryL + (wetL - dryL) * params.mix * bloomEnv;
+        right[n] = dryR + (wetR - dryR) * params.mix * bloomEnv;
     }
 }

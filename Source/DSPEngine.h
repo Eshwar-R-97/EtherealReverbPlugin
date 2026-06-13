@@ -149,12 +149,17 @@ private:
     // 1-pole lowpass at ~300Hz per tap — tracks LF content for decay color
     std::array<float, kNumTaps> fdnLFState {};
 
-    // ── All-pass filters: 2 per channel, run in series ───────────────────
-    static constexpr int kNumAllPass = 2;
-    static constexpr float kAllPassTimes[kNumAllPass] { 5.0f, 1.7f }; // ms
+    // ── All-pass filters: 6 per channel, run in series ───────────────────
+    // More stages = denser, smoother tail; times are mutually non-harmonic
+    static constexpr int kNumAllPass = 6;
+    static constexpr float kAllPassTimes[kNumAllPass]
+        { 1.7f, 3.1f, 5.0f, 8.9f, 12.3f, 15.7f }; // ms
 
-    // Indexed as [channel * kNumAllPass + filterIndex]
+    // Indexed as [channel * kNumAllPass + filterIndex]  (2 channels × 6 stages = 12)
     std::array<CircularBuffer, kNumAllPass * kNumChannels> allPassLines;
+
+    // ── Bloom envelope — wet signal fades in over ~40ms on new note onset ──
+    float bloomEnv { 0.0f };
 
     // ── Tilt EQ: one 1-pole lowpass state per channel ────────────────────
     // Shelf frequency ~1 kHz; tiltEQ>0 darkens, <0 brightens the tail
