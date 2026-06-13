@@ -11,7 +11,7 @@ struct Preset
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Custom LookAndFeel — dark navy palette, cyan accent
+//  Hardware-style LookAndFeel
 // ─────────────────────────────────────────────────────────────────────────────
 class EtherealLookAndFeel : public juce::LookAndFeel_V4
 {
@@ -39,21 +39,21 @@ public:
                             const juce::Drawable* icon,
                             const juce::Colour* textColourToUse) override;
 
-    static constexpr juce::uint32 kBackground  = 0xff0a0a14;
-    static constexpr juce::uint32 kPanel       = 0xff12121f;
-    static constexpr juce::uint32 kAccent      = 0xff00c8ff;
-    static constexpr juce::uint32 kAccentDim   = 0xff005870;
-    static constexpr juce::uint32 kFreeze      = 0xffff6b6b;
-    static constexpr juce::uint32 kText        = 0xffe8e8f0;
-    static constexpr juce::uint32 kTextDim     = 0xff555570;
-    static constexpr juce::uint32 kTrack       = 0xff1e1e30;
-    static constexpr juce::uint32 kKnobBody    = 0xff1a1a2e;
+    static constexpr juce::uint32 kBackground = 0xff080814;
+    static constexpr juce::uint32 kPanel      = 0xff0e0e1c;
+    static constexpr juce::uint32 kAccent     = 0xff00b4ff;
+    static constexpr juce::uint32 kAccentDim  = 0xff004060;
+    static constexpr juce::uint32 kFreeze     = 0xffff4040;
+    static constexpr juce::uint32 kText       = 0xffe0e0ec;
+    static constexpr juce::uint32 kTextDim    = 0xff484860;
+    static constexpr juce::uint32 kTrack      = 0xff1a1a2c;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Editor
 // ─────────────────────────────────────────────────────────────────────────────
-class EtherealReverbEditor : public juce::AudioProcessorEditor
+class EtherealReverbEditor : public juce::AudioProcessorEditor,
+                             private juce::Timer
 {
 public:
     explicit EtherealReverbEditor (EtherealReverbProcessor&);
@@ -63,9 +63,9 @@ public:
     void resized () override;
 
 private:
-    void setupKnob  (juce::Slider&, juce::Label&, const juce::String& labelText);
-    void setupGroupLabel (juce::Label&, const juce::String& text);
-    void applyPreset (int index);
+    void setupKnob    (juce::Slider&, juce::Label&, const juce::String& labelText);
+    void applyPreset  (int index);
+    void timerCallback() override { repaint(); }
 
     EtherealReverbProcessor& processorRef;
     EtherealLookAndFeel      laf;
@@ -75,13 +75,10 @@ private:
     juce::Slider dampingKnob,   diffusionKnob, tiltEQKnob;
     juce::Slider modRateKnob,   modDepthKnob,  mixKnob;
 
-    // ── Knob name labels ───────────────────────────────────────────────────
+    // ── Knob labels ────────────────────────────────────────────────────────
     juce::Label  preDelayLabel,  roomSizeLabel,  decayLabel;
     juce::Label  dampingLabel,   diffusionLabel, tiltEQLabel;
     juce::Label  modRateLabel,   modDepthLabel,  mixLabel;
-
-    // ── Group section headers ──────────────────────────────────────────────
-    juce::Label  spaceLabel, characterLabel, motionLabel;
 
     // ── Freeze toggle ──────────────────────────────────────────────────────
     juce::ToggleButton freezeButton;
@@ -89,7 +86,7 @@ private:
     // ── Preset dropdown ────────────────────────────────────────────────────
     juce::ComboBox presetBox;
 
-    // ── APVTS attachments (keep these alive for the component lifetime) ────
+    // ── APVTS attachments ──────────────────────────────────────────────────
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
 
