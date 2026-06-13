@@ -339,6 +339,49 @@ Attack: 40 ms — the reverb fades in underneath each note rather than appearing
 | Shift Hz | 5–50 Hz | 15 | SSB frequency offset |
 | Voices | 1–5 | 1 | Number of harmonic voices in shimmer |
 | Freeze | on/off | off | Locks FDN feedback at unity gain |
+| Reverse | on/off | off | Parallel reverse reverb; REV TIME knob sets buffer length |
+
+---
+
+## Stage 7 — Reverse reverb (v1.2)
+
+When Reverse is active, a ping-pong buffer pair runs in parallel with the normal signal path.
+
+### Algorithm
+
+Two stereo buffer pairs (`A` and `B`) alternate roles each cycle:
+
+```
+Write side fills with post-predelay signal, sample by sample.
+When write side reaches revBufLen samples:
+    std::reverse(writeBuf, writeBuf + revBufLen)  → in-place reversal
+    swap write/read sides
+    revWritePos = 0; revReadPos = 0; revBufReady = true
+
+Read side outputs: out[n] = readBuf[revReadPos++]  (advances until next swap)
+```
+
+The reversed signal is injected **additively** into the FDN input in parallel with the normal signal:
+
+```
+fdnInput = wetSignal + shimClip×shimScale + reversedSignal×0.5
+```
+
+The `×0.5` scale keeps total FDN input amplitude consistent when both paths are active. The tanh/HP shimmer path already bounds the total FDN injection, so stability is maintained.
+
+### Buffer length
+
+`revBufLen = clamp(preDelay × 0.001 × sampleRate, 1, 15000)`
+
+The Pre-Delay knob doubles as the reverse window control (the UI relabels it "REV TIME" when Reverse is active). Longer values create a longer swell before the note.
+
+### Latency compensation
+
+The reversed chunk is delayed by one buffer length relative to the live signal (the buffer must fill before it can be reversed). The processor reports this via `setLatencySamples(revBufLen)` so DAW hosts can compensate automatically. In standalone/live use there is inherent latency equal to `preDelay` ms.
+
+### What it sounds like
+
+Both forward and reverse tails play simultaneously. The reverse path contributes a "swell" that builds up to the note, giving a backwards-underwater quality. The forward tail decays normally after the note. Together they create a symmetric bloom around each transient — characteristic of psychedelic and ambient music.
 
 ---
 
@@ -355,3 +398,9 @@ Attack: 40 ms — the reverb fades in underneath each note rather than appearing
 **Natural harmonic ratios for voices**: Ratios 1×, 1.5×, 2×, 2.5×, 3× relative to the base pitch correspond to harmonics 2, 3, 4, 5, 6 of the fundamental when `shimmerPitch = 2.0`. This is the natural overtone series — any note played produces harmonically correct shimmer voices.
 
 **Mono input support**: `isBusesLayoutSupported` accepts mono or stereo input. Mono input (e.g. standalone mic) is duplicated to stereo before DSP processing, ensuring the full stereo FDN is always active.
+
+**Reverse as additive not replacement**: Blending the reversed signal in parallel (rather than replacing the normal signal) lets both forward decay and backward swell coexist. This is the psychedelic use case — the note blooms from silence, sustains, then trails off, all at once.
+
+**Ping-pong over circular read**: A circular reverse buffer would require reading backwards from the write head, but the write head moves forward at sample rate while the read position must advance at sample rate too. Ping-pong avoids this contradiction: one buffer is a fixed snapshot that is read front-to-back (after reversal), while the other fills continuously. The audible artifact is a periodic "seam" every `revBufLen` samples as the buffers swap — at 100ms buffer length this is inaudible at normal listening levels.
+
+**UI hardware redesign**: The plugin uses horizontal strip panels (SPACE, CENTER/MOTION, SHIMMER) to match the visual language of hardware units. Each strip has a subtle raised-panel edge highlight and corner rivets. In psychedelic (Reverse active) mode the background shifts from near-black-navy to a crimson→forest-green top-to-bottom gradient, each strip sampling that gradient at its y-position so the SPACE strip is red-tinted and the SHIMMER strip is green-tinted. Pulsing concentric rings animate outward from center. The transition animates over ~625ms via a `psychedelicBlend` float driven by a 20Hz timer.
