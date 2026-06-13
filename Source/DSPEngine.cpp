@@ -126,8 +126,8 @@ void DSPEngine::reset()
     tiltState.fill (0.0f);
     for (int k = 0; k < kNumTaps; ++k)
         lfoPhases[(size_t) k] = (float) k / (float) kNumTaps;
-    for (auto& g : granular) g.reset();
-    for (auto& s : ssb)      s.reset();
+    for (auto& g : granular)  g.reset();
+    for (auto& s : ssb)       s.reset();
     shimFeedbackL = shimFeedbackR = 0.0f;
 }
 
@@ -251,28 +251,52 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         wetR = (y[4] + y[5] + y[6] + y[7]) * 0.25f;
 
         // ── Shimmer: compute pitch-shifted feedback for next sample ───────
-        // Granular pitch shifter gives musical interval shimmer.
-        // SSB frequency shifter adds inharmonic drift and beating.
-        // shimmerChar blends between pure granular and 50/50 hybrid.
+        // Active voices are weighted and summed; inactive voices advance silently
+        // to prevent stale-data pops when the voices count is increased.
         if (params.shimmer > 0.001f)
         {
             const float phaseInc = twoPi * params.shimmerShiftHz / sr;
             const float charAmt  = params.shimmerChar;
+            const int   numV     = params.shimmerVoices;
 
-            const float granL = granular[0].process (wetL, params.shimmerPitch);
-            const float granR = granular[1].process (wetR, params.shimmerPitch);
-            const float ssbL  = ssb[0].process (wetL, phaseInc);
-            const float ssbR  = ssb[1].process (wetR, phaseInc);
+            // Compute normalised weight sum for the active voices
+            float wSum = 0.0f;
+            for (int v = 0; v < numV; ++v) wSum += kVoiceWeights[v];
+            const float invW = 1.0f / wSum;
 
-            // charAmt=0 → pure granular; charAmt=1 → 50/50 granular+SSB blend
+            float granL = 0.0f, granR = 0.0f;
+            for (int v = 0; v < numV; ++v)
+            {
+                const float ratio = params.shimmerPitch * kVoiceRatios[v];
+                granL += granular[(size_t)(v * 2 + 0)].process (wetL, ratio) * kVoiceWeights[v];
+                granR += granular[(size_t)(v * 2 + 1)].process (wetR, ratio) * kVoiceWeights[v];
+            }
+            granL *= invW;
+            granR *= invW;
+
+            // Advance inactive voices silently to keep buffers warm
+            for (int v = numV; v < kMaxVoices; ++v)
+            {
+                const float ratio = params.shimmerPitch * kVoiceRatios[v];
+                granular[(size_t)(v * 2 + 0)].process (wetL, ratio);
+                granular[(size_t)(v * 2 + 1)].process (wetR, ratio);
+            }
+
+            const float ssbL = ssb[0].process (wetL, phaseInc);
+            const float ssbR = ssb[1].process (wetR, phaseInc);
+
             shimFeedbackL = granL * (1.0f - charAmt * 0.5f) + ssbL * (charAmt * 0.5f);
             shimFeedbackR = granR * (1.0f - charAmt * 0.5f) + ssbR * (charAmt * 0.5f);
         }
         else
         {
-            // Keep buffers advancing silently so there's no stale-data pop on enable
-            granular[0].process (wetL, params.shimmerPitch);
-            granular[1].process (wetR, params.shimmerPitch);
+            // Keep all buffers advancing silently
+            for (int v = 0; v < kMaxVoices; ++v)
+            {
+                const float ratio = params.shimmerPitch * kVoiceRatios[v];
+                granular[(size_t)(v * 2 + 0)].process (wetL, ratio);
+                granular[(size_t)(v * 2 + 1)].process (wetR, ratio);
+            }
             shimFeedbackL = shimFeedbackR = 0.0f;
         }
 

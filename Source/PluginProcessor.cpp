@@ -72,6 +72,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout EtherealReverbProcessor::cre
         juce::ParameterID { ParamID::shimmerShiftHz, 1 }, "Shimmer Shift Hz",
         juce::NormalisableRange<float> (5.0f, 50.0f, 0.5f), 15.0f));
 
+    params.push_back (std::make_unique<juce::AudioParameterChoice> (
+        juce::ParameterID { ParamID::shimmerVoices, 1 }, "Shimmer Voices",
+        juce::StringArray { "1", "2", "3", "4", "5" }, 0));
+
     params.push_back (std::make_unique<juce::AudioParameterBool> (
         juce::ParameterID { ParamID::freeze, 1 }, "Freeze", false));
 
@@ -125,6 +129,7 @@ void EtherealReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     params.shimmerPitch   = apvts.getRawParameterValue (ParamID::shimmerPitch)->load();
     params.shimmerChar    = apvts.getRawParameterValue (ParamID::shimmerChar)->load();
     params.shimmerShiftHz = apvts.getRawParameterValue (ParamID::shimmerShiftHz)->load();
+    params.shimmerVoices  = (int) apvts.getRawParameterValue (ParamID::shimmerVoices)->load() + 1;
     params.freeze         = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
 
     dspEngine.process (buffer, params);

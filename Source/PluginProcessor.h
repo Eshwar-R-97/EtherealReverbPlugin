@@ -18,6 +18,7 @@ namespace ParamID
     static const juce::String shimmerPitch   { "shimmerPitch"   };
     static const juce::String shimmerChar    { "shimmerChar"    };
     static const juce::String shimmerShiftHz { "shimmerShiftHz" };
+    static const juce::String shimmerVoices  { "shimmerVoices"  };
     static const juce::String freeze         { "freeze"         };
 }
 

@@ -22,6 +22,7 @@ struct DSPParams
     float shimmerPitch  { 2.0f };   // granular pitch ratio (1.5=fifth, 2.0=octave, etc.)
     float shimmerChar   { 0.3f };   // 0=pure granular, 1=50/50 granular+SSB blend
     float shimmerShiftHz{ 15.0f };  // SSB frequency offset in Hz (5–50)
+    int   shimmerVoices { 1 };      // 1–5 harmonic voices stacked above base pitch
     bool  freeze        { false };  // locks feedback at unity, tail sustains
 };
 
@@ -163,12 +164,18 @@ private:
     // Incremented each sample, wraps at 1.0
     std::array<float, kNumTaps> lfoPhases {};
 
-    // ── Shimmer engines (one per stereo channel) ──────────────────────────
-    // Granular pitch shifter taps the FDN output and pitch-shifts it.
-    // SSB frequency shifter adds inharmonic drift. Both blend via shimmerChar.
-    // The result morphs into the next sample's FDN input for recirculation.
-    std::array<GranularShimmer, 2> granular;
-    std::array<SSBShimmer, 2>      ssb;
+    // ── Shimmer engines ───────────────────────────────────────────────────
+    // Up to 5 harmonic voices per stereo channel (10 total). Voices are indexed
+    // as granular[voice * 2 + channel], so voice 0L=0, 0R=1, 1L=2, 1R=3, etc.
+    // Ratios relative to shimmerPitch: 1×, 1.5×, 2×, 2.5×, 3× — forms the
+    // natural harmonic series (root, fifth, octave, 10th, 12th).
+    static constexpr int   kMaxVoices       = 5;
+    static constexpr float kVoiceRatios[5]  = { 1.0f, 1.5f, 2.0f, 2.5f, 3.0f };
+    // Descending amplitude so overtones decay naturally like a real harmonic series
+    static constexpr float kVoiceWeights[5] = { 1.0f, 0.65f, 0.45f, 0.30f, 0.20f };
+
+    std::array<GranularShimmer, kMaxVoices * 2> granular;
+    std::array<SSBShimmer, 2>                   ssb;
     float shimFeedbackL { 0.0f };
     float shimFeedbackR { 0.0f };
 
