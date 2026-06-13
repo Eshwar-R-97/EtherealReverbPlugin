@@ -1,100 +1,159 @@
 # Ethereal Reverb
 
-An algorithmic reverb plugin by Eshwar Rajasekar. Available as AU (Logic Pro) and VST3 (FL Studio).
+An algorithmic reverb plugin by Eshwar Rajasekar — available for **FL Studio** (Mac) and **Logic Pro**.
 
 Made for learning how to build audio plugins, if you have any suggestions open an issue and I'll try to specialize this plugin to that!
 
 ---
 
-## Installing for Logic Pro (AU)
+## How to Install
 
-**1. Copy the plugin**
+### What you need
+- A Mac (macOS 10.15 or later)
+- FL Studio or Logic Pro already installed
 
-```bash
-cp -R "Ethereal Reverb.component" ~/Library/Audio/Plug-Ins/Components/
-```
+### Step 1 — Download the plugin files
 
-**2. Remove the macOS quarantine flag** (required for unsigned builds)
+1. On this page, click the green **"<> Code"** button near the top right
+2. Click **"Download ZIP"**
+3. Once downloaded, double-click the ZIP file in your Downloads folder — it will unzip into a folder called `etherealreverbplugin-main`
 
-```bash
-sudo xattr -rd com.apple.quarantine ~/Library/Audio/Plug-Ins/Components/"Ethereal Reverb.component"
-```
-
-**3. Load in Logic**
-
-- Open Logic Pro
-- Create an Audio or Software Instrument track
-- Open the plugin slot → Audio Units → EshwarRajasekar → Ethereal Reverb
+Inside that folder, open the **`releases`** folder. You'll see two sub-folders:
+- `FL Studio (VST3)` — contains **Ethereal Reverb.vst3**
+- `Logic Pro (AU)` — contains **Ethereal Reverb.component**
 
 ---
 
-## Installing for FL Studio (VST3)
+### Installing for FL Studio
 
-**1. Copy the plugin**
+**Step 2 — Copy the plugin to the right place**
 
-```bash
-cp -R "Ethereal Reverb.vst3" ~/Library/Audio/Plug-Ins/VST3/
+1. Open **Finder**
+2. In the menu bar at the top of your screen, click **Go → Go to Folder...**
+3. Type this exactly and press Enter:
+   ```
+   ~/Library/Audio/Plug-Ins/VST3
+   ```
+4. Drag **Ethereal Reverb.vst3** from the `releases/FL Studio (VST3)` folder into this VST3 folder
+
+**Step 3 — Remove the macOS security lock**
+
+Because this plugin isn't sold through the App Store, macOS puts a security lock on it. You need to remove that lock using an app called **Terminal**.
+
+To open Terminal:
+- Press **Command + Space** to open Spotlight Search
+- Type **Terminal** and press Enter
+
+Once Terminal is open, copy and paste this entire line and press Enter:
+
 ```
-
-**2. Remove the macOS quarantine flag** (required for unsigned builds)
-
-```bash
 sudo xattr -rd com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/"Ethereal Reverb.vst3"
 ```
 
-**3. Load in FL Studio**
+It will ask for your **Mac login password**. Type it and press Enter. (The password won't show as you type — that's normal.)
 
-- Open FL Studio
-- Go to Options → Manage Plugins
-- Click **Find more plugins** and make sure `~/Library/Audio/Plug-Ins/VST3/` is in the search paths
-- Hit **Rescan** — Ethereal Reverb will appear in your plugin list
-- Drag it onto a mixer insert as an effect
+**Step 4 — Load in FL Studio**
+
+1. Open FL Studio
+2. Go to **Options → Manage Plugins**
+3. Make sure the VST3 folder path is listed — if not, click **"Find more plugins"** and add `/Users/[yourname]/Library/Audio/Plug-Ins/VST3`
+4. Click **Rescan** — Ethereal Reverb will now appear in your plugin browser
+5. To use it, drag it onto a **mixer insert** as an effect
+
+---
+
+### Installing for Logic Pro
+
+**Step 2 — Copy the plugin to the right place**
+
+1. Open **Finder**
+2. In the menu bar at the top of your screen, click **Go → Go to Folder...**
+3. Type this exactly and press Enter:
+   ```
+   ~/Library/Audio/Plug-Ins/Components
+   ```
+4. Drag **Ethereal Reverb.component** from the `releases/Logic Pro (AU)` folder into this Components folder
+
+**Step 3 — Remove the macOS security lock**
+
+Open Terminal (press **Command + Space**, type **Terminal**, press Enter), then copy and paste this line and press Enter:
+
+```
+sudo xattr -rd com.apple.quarantine ~/Library/Audio/Plug-Ins/Components/"Ethereal Reverb.component"
+```
+
+It will ask for your **Mac login password**. Type it and press Enter. (The password won't show as you type — that's normal.)
+
+**Step 4 — Load in Logic**
+
+1. Open Logic Pro
+2. Create an **Audio** or **Software Instrument** track
+3. Click the plugin slot on the channel strip
+4. Navigate to **Audio Units → EshwarRajasekar → Ethereal Reverb**
+
+> **If Logic says "validation failed":** Quit Logic, re-run the Terminal command from Step 3, then reopen Logic. If it still doesn't appear, go to **Logic Pro → Settings → Plug-in Manager**, find Ethereal Reverb, and click **Reset & Rescan**.
 
 ---
 
 ## Controls
 
-| Knob | Range | What it does |
-|---|---|---|
-| **Pre-Delay** | 0–150ms | Silence before the reverb tail starts. Adds space between the dry signal and the room. |
-| **Room Size** | 0–1 | Scales all internal delay lengths. Small = tight, large = cavernous. |
-| **Decay** | 0.1–60s | RT60 time — how long it takes the tail to fall 60dB. |
-| **Damping** | 0–1 | High frequencies die faster at higher values. Simulates absorptive surfaces. |
-| **Diffusion** | 0–1 | Echo density. Low = sparse early reflections, high = smooth wash. |
-| **Tilt EQ** | -1 to +1 | Tilts the frequency balance of the tail. Negative = darker, positive = brighter. |
-| **Mod Rate** | 0–10Hz | LFO speed applied to the comb filters. Adds movement and shimmer. |
-| **Mod Depth** | 0–1 | How much the LFO wobbles the delay lines. Higher = more chorus-like. |
-| **Mix** | 0–1 | Dry/wet blend. |
-| **Freeze** | On/Off | Locks the reverb tail at unity gain — it sustains indefinitely. |
+| Knob | What it does |
+|---|---|
+| **Pre-Delay** | Silence before the reverb starts. Higher = more space between the original sound and the room effect. |
+| **Room Size** | How big the virtual room is. Small = tight and close, large = cavernous. |
+| **Decay** | How long the reverb tail lasts (0.1 to 60 seconds). High values create huge, ambient washes. |
+| **Damping** | How quickly high frequencies fade. High damping = warmer, darker reverb (like carpet and curtains). |
+| **Diffusion** | How dense the reverb is. Low = you can hear distinct echoes, high = smooth wash. |
+| **Tilt EQ** | Shifts the tone of the reverb tail. Turn left for darker, turn right for brighter. |
+| **Mod Rate** | Speed of the subtle wobble/movement in the reverb. Adds shimmer and life. |
+| **Mod Depth** | How strong the movement is. High values give a more chorus-like or dreamy quality. |
+| **Mix** | Blend between the dry (original) signal and the wet (reverb) signal. |
+| **Freeze** | Locks the reverb tail so it sustains forever — great for ambient swells and drones. |
 
 ---
 
 ## Presets
 
-| Preset | Character |
+| Preset | Sound |
 |---|---|
 | Default | Neutral starting point |
-| Studio Room | Small, tight, natural |
-| Cathedral | Huge, dark, slow |
-| Plate | Dense, bright, classic |
-| Dark Cave | Deep low-end, heavy damping |
-| Shimmer Pad | Long, bright, modulated |
-| Broken Spring | Fast LFO chaos |
-| Frozen Void | Maximum decay, freeze-ready |
-| Snare Punch | Short, punchy, gated feel |
-| Deep Space | Extreme tail, wide diffusion |
+| Studio Room | Small, tight, natural — good for drums or vocals |
+| Cathedral | Huge, dark, slow — cinematic and spiritual |
+| Plate | Dense, bright, classic — the sound of classic records |
+| Dark Cave | Deep low-end, heavy damping — cavernous and moody |
+| Shimmer Pad | Long, bright, modulated — ethereal and evolving |
+| Broken Spring | Fast LFO chaos — wobbly and unpredictable |
+| Frozen Void | Maximum decay, freeze-ready — infinite ambience |
+| Snare Punch | Short, punchy — designed for drums |
+| Deep Space | Extreme tail, wide stereo — vast and cinematic |
 
 ---
 
-## Building from Source
+## Troubleshooting
 
-Requires CMake 3.22+, Ninja, and Xcode command line tools.
+**The plugin doesn't show up in my DAW**
+- Make sure you completed Step 3 (the Terminal quarantine removal command)
+- Try rescanning plugins in your DAW's settings
+- Restart your DAW after copying the plugin file
+
+**Terminal says "Permission denied"**
+- Make sure you typed `sudo` at the beginning of the command
+- When it asks for your password, type your Mac login password (it won't show dots or characters — just type and press Enter)
+
+**I accidentally closed Terminal before it finished**
+- Just reopen Terminal and run the command again — it's safe to run more than once
+
+---
+
+## Building from Source (advanced)
+
+This section is for developers only. You'll need CMake 3.22+, Ninja, and Xcode command-line tools installed.
 
 ```bash
-git clone <repo>
-cd etherealreverbplugin
+git clone https://github.com/Eshwar-R-97/EtherealReverbPlugin.git
+cd EtherealReverbPlugin
 
-# Clone JUCE into the expected location
+# Pre-clone JUCE to avoid network issues
 mkdir -p build/_deps
 git clone --depth=1 --branch 8.0.7 https://github.com/juce-framework/JUCE.git build/_deps/juce-src
 
