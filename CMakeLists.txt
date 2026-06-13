@@ -77,11 +77,17 @@ target_link_libraries(EtherealReverb
 
 # ── Unit tests ────────────────────────────────────────────────────────────────
 juce_add_console_app(EtherealReverbTests PRODUCT_NAME "EtherealReverbTests")
+juce_generate_juce_header(EtherealReverbTests)
 
 target_sources(EtherealReverbTests
     PRIVATE
         Tests/CircularBufferTests.cpp
         Tests/PreDelayTests.cpp
+        Tests/GranularShimmerTests.cpp
+        Tests/SSBShimmerTests.cpp
+        Tests/FDNTests.cpp
+        Tests/AllPassBloomTiltTests.cpp
+        Tests/ReverseReverbTests.cpp
         Source/DSPEngine.cpp
 )
 
@@ -97,5 +103,6 @@ target_link_libraries(EtherealReverbTests
     PRIVATE
         Catch2::Catch2WithMain
         juce::juce_audio_basics
+        juce::juce_audio_processors
         juce::juce_core
 )
