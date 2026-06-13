@@ -41,6 +41,8 @@ juce_add_plugin(EtherealReverb
     PRODUCT_NAME                "Ethereal Reverb"
     VST3_CATEGORIES             "Fx|Reverb"
     AU_MAIN_TYPE                kAudioUnitType_Effect
+    MICROPHONE_PERMISSION_ENABLED  TRUE
+    MICROPHONE_PERMISSION_TEXT     "Ethereal Reverb needs microphone access to process live audio."
 )
 
 juce_generate_juce_header(EtherealReverb)
