@@ -861,7 +861,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     // ── Version footer ────────────────────────────────────────────────────
     g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f)));
     g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
-    g.drawText ("v0.1.0", 0, H - 16, W - 10, 14, juce::Justification::right, false);
+    g.drawText ("v1.1.0", 0, H - 16, W - 10, 14, juce::Justification::right, false);
 }
 
 void EtherealReverbEditor::applyPreset (int index)
