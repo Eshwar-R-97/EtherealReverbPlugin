@@ -25,6 +25,7 @@ struct DSPParams
     int   shimmerVoices { 1 };      // 1–5 harmonic voices stacked above base pitch
     bool  freeze        { false };  // locks feedback at unity, tail sustains
     bool  reverse       { false };  // reverse reverb: ping-pong input buffer runs backwards through FDN in parallel
+    float reverseMix    { 0.75f }; // injection level of reversed signal into FDN (0=off, 1=full)
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

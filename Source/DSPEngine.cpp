@@ -278,8 +278,8 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
 
             if (revBufReady)
             {
-                revL = rBufL[revReadPos] * 0.5f;
-                revR = rBufR[revReadPos] * 0.5f;
+                revL = rBufL[revReadPos] * params.reverseMix;
+                revR = rBufR[revReadPos] * params.reverseMix;
                 revReadPos = (revReadPos + 1) % revBufLen;
             }
 
