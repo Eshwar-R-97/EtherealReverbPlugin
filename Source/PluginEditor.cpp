@@ -201,22 +201,44 @@ void EtherealLookAndFeel::drawToggleButton (juce::Graphics& g,
 void EtherealLookAndFeel::drawButtonBackground (juce::Graphics& g, juce::Button& btn,
     const juce::Colour&, bool isHighlighted, bool)
 {
-    const auto b = btn.getLocalBounds().toFloat();
-    // Subtle separator line across the top
-    g.setColour (juce::Colour (0xff1a1a30));
-    g.drawLine (b.getX() + 6.0f, b.getY(), b.getRight() - 6.0f, b.getY(), 0.75f);
-    // Very faint highlight tint on hover
-    if (isHighlighted)
+    const auto  b      = btn.getLocalBounds().toFloat();
+    const bool  isWide = btn.getWidth() > 400;
+
+    if (isWide)
     {
-        g.setColour (juce::Colour (0xff8040ff).withAlpha (0.07f));
-        g.fillRoundedRectangle (b, 3.0f);
+        // Full-width section header — solid panel background with top/bottom borders
+        juce::ColourGradient hdr (
+            juce::Colour (0xff14142a), b.getX(), b.getY(),
+            juce::Colour (0xff0c0c1a), b.getX(), b.getBottom(), false);
+        g.setGradientFill (hdr);
+        g.fillRect (b);
+        g.setColour (juce::Colour (0xff252540));
+        g.drawLine (b.getX(), b.getY(), b.getRight(), b.getY(), 1.0f);
+        g.setColour (juce::Colour (0xff1a1a30));
+        g.drawLine (b.getX(), b.getBottom() - 0.5f, b.getRight(), b.getBottom() - 0.5f, 0.5f);
+        if (isHighlighted)
+        {
+            g.setColour (juce::Colour (0xff8040ff).withAlpha (0.05f));
+            g.fillRect (b);
+        }
+    }
+    else
+    {
+        g.setColour (juce::Colour (0xff1a1a30));
+        g.drawLine (b.getX() + 6.0f, b.getY(), b.getRight() - 6.0f, b.getY(), 0.75f);
+        if (isHighlighted)
+        {
+            g.setColour (juce::Colour (0xff8040ff).withAlpha (0.07f));
+            g.fillRoundedRectangle (b, 3.0f);
+        }
     }
 }
 
 void EtherealLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton& btn,
     bool, bool)
 {
-    g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
+    const bool isWide = btn.getWidth() > 400;
+    g.setFont (juce::Font (juce::FontOptions{}.withHeight (isWide ? 9.5f : 8.5f).withStyle ("Bold")));
     g.setColour (juce::Colour (0xff8040ff).withAlpha (btn.isMouseOver() ? 0.85f : 0.55f));
     g.drawText (btn.getButtonText(), btn.getLocalBounds(), juce::Justification::centred, false);
 }
@@ -388,224 +410,243 @@ void EtherealReverbEditor::setupKnob (juce::Slider& knob, juce::Label& label,
 void EtherealReverbEditor::resized()
 {
     // ── Preset box ────────────────────────────────────────────────────────
-    presetBox.setBounds (570, 17, 215, 28);
+    presetBox.setBounds (548, 14, 234, 28);
 
-    // ── Left panel — 3 knobs stacked (SPACE group) ────────────────────────
-    constexpr int lKnobSz  = 80;
-    constexpr int lPanelX  = 5;
-    constexpr int lPanelW  = 205;
-    constexpr int lKnobCX  = lPanelX + lPanelW / 2;
-    constexpr int lKnobX   = lKnobCX - lKnobSz / 2;
+    // ─────────────────────────────────────────────────────────────────────
+    //  SPACE strip  (y=58..153)  — all 6 primary reverb knobs in one row
+    // ─────────────────────────────────────────────────────────────────────
+    constexpr int spaceY  = 62;
+    constexpr int spaceKz = 64;
+    constexpr int spaceColW = 800 / 6;   // 133px per column
 
-    const int leftKnobY[] = { 88, 228, 368 };
-    juce::Slider* leftKnobs[]  = { &preDelayKnob,  &roomSizeKnob,  &decayKnob  };
-    juce::Label*  leftLabels[] = { &preDelayLabel,  &roomSizeLabel, &decayLabel };
-
-    for (int i = 0; i < 3; ++i)
     {
-        leftKnobs[i]->setBounds  (lKnobX, leftKnobY[i], lKnobSz, lKnobSz);
-        leftLabels[i]->setBounds (lPanelX, leftKnobY[i] + lKnobSz + 4, lPanelW, 14);
-    }
-
-    // ── Right panel ───────────────────────────────────────────────────────
-    constexpr int rPanelX = 590;
-    constexpr int rColW   = 69;   // 3 cols × 69 = 207px total
-
-    const int rColCX[] = {
-        rPanelX + rColW / 2,
-        rPanelX + rColW + rColW / 2,
-        rPanelX + 2 * rColW + rColW / 2
-    };
-
-    // Row 1 — Damping, Diffusion, TiltEQ (knobSz=58)
-    {
-        constexpr int ky = 88, sz = 58;
-        juce::Slider* knobs[]  = { &dampingKnob,  &diffusionKnob, &tiltEQKnob  };
-        juce::Label*  labels[] = { &dampingLabel, &diffusionLabel, &tiltEQLabel };
-        for (int col = 0; col < 3; ++col)
+        juce::Slider* knobs[]  = { &preDelayKnob, &roomSizeKnob, &decayKnob,
+                                    &dampingKnob, &diffusionKnob, &tiltEQKnob };
+        juce::Label*  labels[] = { &preDelayLabel, &roomSizeLabel, &decayLabel,
+                                    &dampingLabel, &diffusionLabel, &tiltEQLabel };
+        for (int i = 0; i < 6; ++i)
         {
-            knobs[col]->setBounds  (rColCX[col] - sz / 2, ky, sz, sz);
-            labels[col]->setBounds (rPanelX + col * rColW, ky + sz + 4, rColW, 14);
+            const int cx = spaceColW * i + spaceColW / 2;
+            knobs[i]->setBounds  (cx - spaceKz / 2, spaceY + 8, spaceKz, spaceKz);
+            labels[i]->setBounds (spaceColW * i,    spaceY + 8 + spaceKz + 3, spaceColW, 13);
         }
     }
 
-    // Row 2 — ModRate, ModDepth, Mix (knobSz=58)
+    // ─────────────────────────────────────────────────────────────────────
+    //  CENTER section  (y=158..378)
+    //  Left:  Visualization screen  (x=8, w=400)
+    //  Right: MOTION panel          (x=416, w=376)
+    // ─────────────────────────────────────────────────────────────────────
+    constexpr int motionX  = 416;
+    constexpr int motionW  = 376;
+    constexpr int motionY  = 163;
+    constexpr int mKnobSz  = 54;
+    constexpr int mColW    = motionW / 3;   // ~125px
+
+    // Row 1 — ModRate, ModDepth, Mix
     {
-        constexpr int ky = 168, sz = 58;
         juce::Slider* knobs[]  = { &modRateKnob,  &modDepthKnob, &mixKnob  };
         juce::Label*  labels[] = { &modRateLabel, &modDepthLabel, &mixLabel };
         for (int col = 0; col < 3; ++col)
         {
-            knobs[col]->setBounds  (rColCX[col] - sz / 2, ky, sz, sz);
-            labels[col]->setBounds (rPanelX + col * rColW, ky + sz + 4, rColW, 14);
+            const int cx = motionX + mColW * col + mColW / 2;
+            knobs[col]->setBounds  (cx - mKnobSz / 2, motionY, mKnobSz, mKnobSz);
+            labels[col]->setBounds (motionX + mColW * col, motionY + mKnobSz + 3, mColW, 13);
         }
     }
 
-    // Row 3 — Decay Color (centred, knobSz=52)
+    // Row 2 — DecayColor (centred in motion panel)
     {
-        constexpr int ky = 258, sz = 52;
-        const int kcx = rPanelX + 207 / 2;
-        decayColorKnob.setBounds  (kcx - sz / 2, ky, sz, sz);
-        decayColorLabel.setBounds (rPanelX, ky + sz + 4, 207, 14);
+        constexpr int ky = motionY + mKnobSz + 24, sz = 50;
+        const int cx = motionX + motionW / 2;
+        decayColorKnob.setBounds  (cx - sz / 2, ky, sz, sz);
+        decayColorLabel.setBounds (motionX, ky + sz + 3, motionW, 13);
     }
 
-    // SHIMMER expand button (always visible as section header)
-    shimmerExpandBtn.setBounds (rPanelX, 334, 207, 18);
+    // ─────────────────────────────────────────────────────────────────────
+    //  SHIMMER section header + controls  (y=382+)
+    // ─────────────────────────────────────────────────────────────────────
+    constexpr int shimHeaderY = 382;
+    shimmerExpandBtn.setBounds (0, shimHeaderY, 800, 20);
 
-    // Shimmer controls — only visible when expanded
     {
-        const bool show = shimmerExpanded;
+        const bool show       = shimmerExpanded;
+        constexpr int ky      = shimHeaderY + 26;
+        constexpr int sz      = 48;
+        constexpr int shimColW = 800 / 5;   // 160px per column (4 knobs + voices)
 
-        // Row 4 — Shimmer, ShimmerPitch, ShimmerChar
-        constexpr int ky4 = 358, sz4 = 50;
-        juce::Slider* knobs4[]  = { &shimmerKnob,  &shimmerPitchKnob, &shimmerCharKnob  };
-        juce::Label*  labels4[] = { &shimmerLabel, &shimmerPitchLabel, &shimmerCharLabel };
-        for (int col = 0; col < 3; ++col)
+        juce::Slider* knobs[]  = { &shimmerKnob, &shimmerPitchKnob,
+                                    &shimmerCharKnob, &shimmerShiftHzKnob };
+        juce::Label*  labels[] = { &shimmerLabel, &shimmerPitchLabel,
+                                    &shimmerCharLabel, &shimmerShiftHzLabel };
+        for (int i = 0; i < 4; ++i)
         {
-            knobs4[col]->setVisible (show);
-            labels4[col]->setVisible (show);
+            knobs[i]->setVisible (show);
+            labels[i]->setVisible (show);
             if (show)
             {
-                knobs4[col]->setBounds  (rColCX[col] - sz4 / 2, ky4, sz4, sz4);
-                labels4[col]->setBounds (rPanelX + col * rColW, ky4 + sz4 + 4, rColW, 14);
+                const int cx = shimColW * i + shimColW / 2;
+                knobs[i]->setBounds  (cx - sz / 2, ky, sz, sz);
+                labels[i]->setBounds (shimColW * i, ky + sz + 3, shimColW, 13);
             }
         }
 
-        // Row 5 — ShimmerShiftHz centred
-        constexpr int ky5 = 428, sz5 = 44;
-        shimmerShiftHzKnob.setVisible (show);
-        shimmerShiftHzLabel.setVisible (show);
-        if (show)
-        {
-            const int kcx = rPanelX + 207 / 2;
-            shimmerShiftHzKnob.setBounds  (kcx - sz5 / 2, ky5, sz5, sz5);
-            shimmerShiftHzLabel.setBounds (rPanelX, ky5 + sz5 + 4, 207, 14);
-        }
-
-        // Row 6 — Voices ComboBox
         shimmerVoicesBox.setVisible (show);
         shimmerVoicesLabel.setVisible (show);
         if (show)
         {
-            constexpr int ky6 = 492;
-            shimmerVoicesBox.setBounds   (rPanelX + 6, ky6,      195, 22);
-            shimmerVoicesLabel.setBounds (rPanelX,      ky6 - 13, 207, 11);
+            const int col4cx = shimColW * 4 + shimColW / 2;
+            shimmerVoicesLabel.setBounds (shimColW * 4, ky, shimColW, 13);
+            shimmerVoicesBox.setBounds   (col4cx - 72, ky + 17, 144, 22);
         }
     }
 
-    // ── Freeze + Reverse buttons — side by side below the visualization ───
-    constexpr int btnW = 175, btnH = 50, btnGap = 8;
+    // ── Freeze + Reverse buttons ──────────────────────────────────────────
+    constexpr int btnW = 175, btnH = 46, btnGap = 8;
+    const int btnY      = shimmerExpanded ? 476 : 412;
     const int btnStartX = 400 - (btnW * 2 + btnGap) / 2;
-    freezeButton.setBounds  (btnStartX,                400, btnW, btnH);
-    reverseButton.setBounds (btnStartX + btnW + btnGap, 400, btnW, btnH);
+    freezeButton.setBounds  (btnStartX,                btnY, btnW, btnH);
+    reverseButton.setBounds (btnStartX + btnW + btnGap, btnY, btnW, btnH);
 }
 
 void EtherealReverbEditor::paint (juce::Graphics& g)
 {
-    const int W = getWidth();
-    const int H = getHeight();
+    const int   W  = getWidth();
+    const int   H  = getHeight();
+    const float fW = (float) W;
+    const float fH = (float) H;
 
-    // Helper: interpolate between normal and psychedelic colours
+    // ── Colour helpers ────────────────────────────────────────────────────
+    // blendCol: interpolate between normal and psychedelic palette colours
     auto blendCol = [&] (juce::uint32 normal, juce::uint32 psycho) -> juce::Colour
     {
         return juce::Colour (normal).interpolatedWith (juce::Colour (psycho), psychedelicBlend);
     };
-
-    // ── Background gradient ───────────────────────────────────────────────
+    // psychoAt: red (top) → green (bottom) gradient at a given y fraction
+    auto psychoAt = [&] (float yFrac) -> juce::Colour
     {
-        const juce::Colour bgTop = blendCol (0xff090916, 0xff1a0608);
-        const juce::Colour bgBot = blendCol (0xff040408, 0xff030c02);
-        juce::ColourGradient bg (bgTop, 0.0f, 0.0f, bgBot, 0.0f, (float) H, false);
+        return juce::Colour (0xff2a0808).interpolatedWith (juce::Colour (0xff082a08), yFrac);
+    };
+
+    // ── Background — full crimson→green gradient in psycho mode ──────────
+    {
+        const juce::Colour bgTop = juce::Colour (0xff090916)
+            .interpolatedWith (psychoAt (0.0f), psychedelicBlend);
+        const juce::Colour bgBot = juce::Colour (0xff040408)
+            .interpolatedWith (psychoAt (1.0f), psychedelicBlend);
+        juce::ColourGradient bg (bgTop, 0.0f, 0.0f, bgBot, 0.0f, fH, false);
         g.setGradientFill (bg);
         g.fillAll();
     }
 
-    // Radial vignette — in psychedelic mode takes on a red/green tint
+    // Radial vignette
     {
-        const juce::Colour vigEdge = blendCol (0x66000000, 0x55100400);
-        juce::ColourGradient vig (
-            juce::Colours::transparentBlack, (float) W * 0.5f, (float) H * 0.4f,
-            vigEdge, 0.0f, 0.0f, true);
+        const juce::Colour vigEdge = blendCol (0x66000000, 0x44000800);
+        juce::ColourGradient vig (juce::Colours::transparentBlack,
+                                  fW * 0.5f, fH * 0.42f,
+                                  vigEdge, 0.0f, 0.0f, true);
         g.setGradientFill (vig);
         g.fillAll();
     }
 
-    // Psychedelic pulsing rings (only visible when blend > 0)
+    // Psychedelic pulsing rings
     if (psychedelicBlend > 0.0f)
     {
         const double now = juce::Time::getMillisecondCounterHiRes() * 0.001;
-        const float cx   = (float) W * 0.5f;
-        const float cy   = (float) H * 0.47f;
+        const float  cx  = fW * 0.5f, cy = fH * 0.47f;
         for (int ring = 0; ring < 4; ++ring)
         {
-            const float phase = (float) std::fmod (now * 0.25 + ring * 0.25, 1.0);
-            const float r     = 60.0f + phase * (float) W * 0.65f;
-            const float alpha = psychedelicBlend * (1.0f - phase) * 0.055f;
-            const juce::Colour rc = (ring % 2 == 0)
-                ? juce::Colour (0xffff1a30).withAlpha (alpha)
-                : juce::Colour (0xff20ff50).withAlpha (alpha);
-            g.setColour (rc);
-            g.drawEllipse (cx - r, cy - r * 0.55f, r * 2.0f, r * 1.1f, 1.2f);
+            const float phase = (float) std::fmod (now * 0.22 + ring * 0.25, 1.0);
+            const float r     = 55.0f + phase * fW * 0.70f;
+            const float alpha = psychedelicBlend * (1.0f - phase) * 0.07f;
+            g.setColour ((ring % 2 == 0 ? juce::Colour (0xffff1a30)
+                                        : juce::Colour (0xff20ff50)).withAlpha (alpha));
+            g.drawEllipse (cx - r, cy - r * 0.55f, r * 2.0f, r * 1.1f, 1.3f);
         }
     }
 
-    // ── Left panel background ─────────────────────────────────────────────
-    {
-        juce::ColourGradient pg (
-            blendCol (0xff0f0f1e, 0xff1a0608), 5.0f, 65.0f,
-            blendCol (0xff080810, 0xff0e0404), 210.0f, 65.0f, false);
-        g.setGradientFill (pg);
-        g.fillRoundedRectangle (5.0f, 65.0f, 205.0f, (float) H - 82.0f, 6.0f);
-        g.setColour (blendCol (0xff1a1a30, 0xff400808));
-        g.drawRoundedRectangle (5.0f, 65.0f, 205.0f, (float) H - 82.0f, 6.0f, 1.0f);
-    }
-
-    g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.5f).withStyle ("Bold")));
-    g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.65f));
-    g.drawText ("SPACE", 5, 70, 205, 13, juce::Justification::centred, false);
-
-    // ── Right panel background ────────────────────────────────────────────
-    {
-        juce::ColourGradient pg (
-            blendCol (0xff0f0f1e, 0xff1a0608), 588.0f, 65.0f,
-            blendCol (0xff080810, 0xff0e0404), 797.0f, 65.0f, false);
-        g.setGradientFill (pg);
-        g.fillRoundedRectangle (588.0f, 65.0f, 207.0f, (float) H - 82.0f, 6.0f);
-        g.setColour (blendCol (0xff1a1a30, 0xff400808));
-        g.drawRoundedRectangle (588.0f, 65.0f, 207.0f, (float) H - 82.0f, 6.0f, 1.0f);
-    }
-
-    g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.5f).withStyle ("Bold")));
-    g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.65f));
-    g.drawText ("CHARACTER & MOTION", 588, 70, 207, 13, juce::Justification::centred, false);
-
-    // Right panel section sub-headers
-    g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
-    g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.40f));
-    g.drawText ("TEXTURE",  588, 244, 207, 11, juce::Justification::centred, false);
-    g.setColour (blendCol (0xff1a1a30, 0xff300808));
-    g.drawLine (594.0f, 242.0f, 789.0f, 242.0f, 0.75f);
-
-    // VOICES sub-label (only when shimmer is expanded)
-    if (shimmerExpanded)
-    {
-        g.setColour (juce::Colour (0xff8040ff).withAlpha (0.35f));
-        g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
-        g.drawText ("VOICES", 588, 479, 207, 11, juce::Justification::centred, false);
-        g.setColour (blendCol (0xff1a1a30, 0xff300808));
-        g.drawLine (594.0f, 477.0f, 789.0f, 477.0f, 0.75f);
-    }
-
     // ── Header divider ────────────────────────────────────────────────────
-    g.setColour (blendCol (EtherealLookAndFeel::kAccentDim, 0xff300808));
-    g.drawLine (0.0f, 62.0f, (float) W, 62.0f, 1.0f);
+    g.setColour (blendCol (EtherealLookAndFeel::kAccentDim, 0xff3a0808));
+    g.drawLine (0.0f, 57.0f, fW, 57.0f, 1.0f);
+
+    // ── Rivet helper — small hardware screw dot ───────────────────────────
+    auto drawRivet = [&] (float rx, float ry)
+    {
+        g.setColour (blendCol (0xff1c1c30, 0xff2a1010));
+        g.fillEllipse (rx - 3.5f, ry - 3.5f, 7.0f, 7.0f);
+        g.setColour (blendCol (0xff303048, 0xff401818));
+        g.drawEllipse (rx - 3.5f, ry - 3.5f, 7.0f, 7.0f, 0.8f);
+        g.setColour (juce::Colour (0x22ffffff));
+        g.fillEllipse (rx - 2.2f, ry - 3.0f, 2.5f, 2.0f);
+    };
+
+    // ── SPACE strip  (y=58..153) ──────────────────────────────────────────
+    {
+        const float sY = 58.0f, sH = 95.0f;
+        const juce::Colour stripNorm  = juce::Colour (0xff0e0e1e);
+        const juce::Colour stripPsyco = psychoAt (sY / fH).darker (0.25f);
+        juce::ColourGradient sg (
+            stripNorm.interpolatedWith (stripPsyco, psychedelicBlend), 0.0f, sY,
+            stripNorm.darker (0.1f).interpolatedWith (stripPsyco.darker (0.1f), psychedelicBlend),
+            0.0f, sY + sH, false);
+        g.setGradientFill (sg);
+        g.fillRect (0.0f, sY, fW, sH);
+
+        // Top edge highlight (raised panel feel)
+        g.setColour (juce::Colour (0x18ffffff));
+        g.drawLine (0.0f, sY, fW, sY, 1.0f);
+        // Bottom shadow
+        g.setColour (juce::Colour (0x28000000));
+        g.drawLine (0.0f, sY + sH, fW, sY + sH, 1.5f);
+
+        // Section label
+        g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
+        g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.55f));
+        g.drawText ("SPACE", 0, (int) sY + 1, W, 10, juce::Justification::centred, false);
+
+        // Corner rivets
+        drawRivet (10.0f, sY + sH * 0.5f);
+        drawRivet (fW - 10.0f, sY + sH * 0.5f);
+    }
+
+    // ── CENTER section  (y=158..380) — divider between space and center ───
+    {
+        g.setColour (blendCol (0xff1a1a30, 0xff350808));
+        g.drawLine (0.0f, 157.0f, fW, 157.0f, 1.0f);
+    }
+
+    // MOTION panel background (right of visualization screen)
+    {
+        const float mpX = 414.0f, mpY = 158.0f, mpW = fW - mpX, mpH = 222.0f;
+        const juce::Colour mpNorm  = juce::Colour (0xff0c0c1a);
+        const juce::Colour mpPsyco = psychoAt (0.5f).darker (0.3f);
+        juce::ColourGradient mg (
+            mpNorm.interpolatedWith (mpPsyco, psychedelicBlend), mpX, mpY,
+            mpNorm.darker (0.08f).interpolatedWith (mpPsyco.darker (0.08f), psychedelicBlend),
+            mpX + mpW, mpY, false);
+        g.setGradientFill (mg);
+        g.fillRect (mpX, mpY, mpW, mpH);
+
+        // Left separator
+        g.setColour (blendCol (0xff1a1a30, 0xff350808));
+        g.drawLine (mpX, mpY, mpX, mpY + mpH, 1.0f);
+
+        // MOTION label
+        g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
+        g.setColour (blendCol (EtherealLookAndFeel::kAccent, 0xff40ff40).withAlpha (0.55f));
+        g.drawText ("MOTION", (int) mpX, (int) mpY + 2, (int) mpW, 10,
+                    juce::Justification::centred, false);
+
+        drawRivet (mpX + 8.0f,  mpY + mpH * 0.5f);
+        drawRivet (fW - 8.0f,   mpY + mpH * 0.5f);
+    }
 
     // ── Title "EtherealReverb" — sine-wave gradient fill inside letters ───
     {
-        juce::Font titleFont (juce::FontOptions{}.withHeight (47.0f).withStyle ("Bold"));
+        juce::Font titleFont (juce::FontOptions{}.withHeight (44.0f).withStyle ("Bold"));
         juce::GlyphArrangement ga;
         ga.addFittedText (titleFont, "EtherealReverb",
-                          18.0f, 4.0f, 500.0f, 54.0f,
+                          16.0f, 4.0f, 520.0f, 52.0f,
                           juce::Justification::centredLeft, 1);
 
         juce::Path textPath;
@@ -618,14 +659,14 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         const juce::Colour titleBot = blendCol (0xff000018, 0xff050e02);
         juce::ColourGradient titleGrad (titleTop, 18.0f, 4.0f, titleBot, 18.0f, 58.0f, false);
         g.setGradientFill (titleGrad);
-        g.fillRect (8, 0, 530, 62);
+        g.fillRect (6, 0, 540, 57);
 
         const juce::Colour waveCol = blendCol (0xff3a7ae0, 0xffcc2040);
-        for (float fy = 1.0f; fy < 62.0f; fy += 3.2f)
+        for (float fy = 1.0f; fy < 57.0f; fy += 3.2f)
         {
             juce::Path sinPath;
             bool started = false;
-            for (float fx = 10.0f; fx <= 535.0f; fx += 1.5f)
+            for (float fx = 8.0f; fx <= 548.0f; fx += 1.5f)
             {
                 const float py = fy
                                + 5.5f * std::sin (fx * 0.055f)
@@ -633,7 +674,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 if (!started) { sinPath.startNewSubPath (fx, py); started = true; }
                 else sinPath.lineTo (fx, py);
             }
-            const float t     = fy / 62.0f;
+            const float t     = fy / 57.0f;
             const float alpha = 0.22f + 0.16f * std::sin (t * juce::MathConstants<float>::twoPi);
             g.setColour (waveCol.withAlpha (alpha));
             g.strokePath (sinPath, juce::PathStrokeType (0.75f));
@@ -646,12 +687,12 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
 
         g.setFont (juce::Font (juce::FontOptions{}.withHeight (10.5f)));
         g.setColour (juce::Colour (0xff505068));
-        g.drawText ("by Eshwar", 22, 47, 200, 13, juce::Justification::centredLeft, false);
+        g.drawText ("by Eshwar", 20, 43, 200, 13, juce::Justification::centredLeft, false);
     }
 
     // ── Decay visualization screen ────────────────────────────────────────
     {
-        constexpr float scX = 220.0f, scY = 70.0f, scW = 360.0f, scH = 270.0f;
+        constexpr float scX = 10.0f, scY = 160.0f, scW = 396.0f, scH = 215.0f;
         constexpr float scCorner = 8.0f;
 
         // Outer shadow
