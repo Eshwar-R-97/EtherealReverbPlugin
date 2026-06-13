@@ -1,0 +1,62 @@
+{
+  "Name": "Ethereal Reverb",
+  "Version": "0.1.0",
+  "Factory Info": {
+    "Vendor": "EshwarRajasekar",
+    "URL": "",
+    "E-Mail": "",
+    "Flags": {
+      "Unicode": true,
+      "Classes Discardable": false,
+      "Component Non Discardable": false,
+    },
+  },
+  "Classes": [
+    {
+      "CID": "ABCDEF019182FAEB4573687245727662",
+      "Category": "Audio Module Class",
+      "Name": "Ethereal Reverb",
+      "Vendor": "EshwarRajasekar",
+      "Version": "0.1.0",
+      "SDKVersion": "VST 3.7.12",
+      "Sub Categories": [
+        "Fx",
+        "Fx",
+        "Reverb",
+      ],
+      "Class Flags": 0,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+    {
+      "CID": "ABCDEF011234ABCD4573687245727662",
+      "Category": "Component Controller Class",
+      "Name": "Ethereal Reverb",
+      "Vendor": "EshwarRajasekar",
+      "Version": "0.1.0",
+      "SDKVersion": "VST 3.7.12",
+      "Sub Categories": [
+        "Fx",
+        "Fx",
+        "Reverb",
+      ],
+      "Class Flags": 0,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+    {
+      "CID": "ABCDEF01C0DEF00D4573687245727662",
+      "Category": "Plugin Compatibility Class",
+      "Name": "Ethereal Reverb",
+      "Vendor": "EshwarRajasekar",
+      "Version": "0.1.0",
+      "SDKVersion": "VST 3.7.12",
+      "Class Flags": 0,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+  ],
+}
