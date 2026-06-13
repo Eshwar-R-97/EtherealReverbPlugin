@@ -6,7 +6,7 @@ struct Preset
 {
     const char* name;
     float preDelay, roomSize, decay, damping, diffusion;
-    float modRate, modDepth, tiltEQ, mix;
+    float modRate, modDepth, tiltEQ, mix, decayColor;
     bool  freeze;
 };
 
@@ -71,14 +71,16 @@ private:
     EtherealLookAndFeel      laf;
 
     // ── Knobs ──────────────────────────────────────────────────────────────
-    juce::Slider preDelayKnob,  roomSizeKnob,  decayKnob;
-    juce::Slider dampingKnob,   diffusionKnob, tiltEQKnob;
-    juce::Slider modRateKnob,   modDepthKnob,  mixKnob;
+    juce::Slider preDelayKnob,   roomSizeKnob,  decayKnob;
+    juce::Slider dampingKnob,    diffusionKnob, tiltEQKnob;
+    juce::Slider modRateKnob,    modDepthKnob,  mixKnob;
+    juce::Slider decayColorKnob;
 
     // ── Knob labels ────────────────────────────────────────────────────────
-    juce::Label  preDelayLabel,  roomSizeLabel,  decayLabel;
-    juce::Label  dampingLabel,   diffusionLabel, tiltEQLabel;
-    juce::Label  modRateLabel,   modDepthLabel,  mixLabel;
+    juce::Label  preDelayLabel,   roomSizeLabel,  decayLabel;
+    juce::Label  dampingLabel,    diffusionLabel, tiltEQLabel;
+    juce::Label  modRateLabel,    modDepthLabel,  mixLabel;
+    juce::Label  decayColorLabel;
 
     // ── Freeze toggle ──────────────────────────────────────────────────────
     juce::ToggleButton freezeButton;
@@ -93,6 +95,7 @@ private:
     std::unique_ptr<SliderAttachment> preDelayAttach,  roomSizeAttach, decayAttach;
     std::unique_ptr<SliderAttachment> dampingAttach,   diffusionAttach, tiltEQAttach;
     std::unique_ptr<SliderAttachment> modRateAttach,   modDepthAttach,  mixAttach;
+    std::unique_ptr<SliderAttachment> decayColorAttach;
     std::unique_ptr<ButtonAttachment> freezeAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EtherealReverbEditor)

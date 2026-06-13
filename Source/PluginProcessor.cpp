@@ -52,6 +52,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout EtherealReverbProcessor::cre
         juce::ParameterID { ParamID::mix, 1 }, "Mix",
         juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.3f));
 
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::decayColor, 1 }, "Decay Color",
+        juce::NormalisableRange<float> (-1.0f, 1.0f, 0.01f), 0.0f));
+
     params.push_back (std::make_unique<juce::AudioParameterBool> (
         juce::ParameterID { ParamID::freeze, 1 }, "Freeze", false));
 
@@ -98,9 +102,10 @@ void EtherealReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     params.diffusion = apvts.getRawParameterValue (ParamID::diffusion)->load();
     params.modRate   = apvts.getRawParameterValue (ParamID::modRate)->load();
     params.modDepth  = apvts.getRawParameterValue (ParamID::modDepth)->load();
-    params.tiltEQ    = apvts.getRawParameterValue (ParamID::tiltEQ)->load();
-    params.mix       = apvts.getRawParameterValue (ParamID::mix)->load();
-    params.freeze    = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
+    params.tiltEQ     = apvts.getRawParameterValue (ParamID::tiltEQ)->load();
+    params.mix        = apvts.getRawParameterValue (ParamID::mix)->load();
+    params.decayColor = apvts.getRawParameterValue (ParamID::decayColor)->load();
+    params.freeze     = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
 
     dspEngine.process (buffer, params);
 }

@@ -4,17 +4,17 @@
 //  Preset table
 // ─────────────────────────────────────────────────────────────────────────────
 static const std::array<Preset, 10> kPresets = {{
-    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix    frz
-    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f, false },
-    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, false },
-    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, false },
-    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f, false },
-    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, false },
-    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f, false },
-    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f, false },
-    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, true  },
-    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f, false },
-    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, false },
+    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix   dColor  frz
+    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f, false },
+    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f, false },
+    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f, false },
+    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f, false },
+    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f, false },
+    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f, false },
+    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f, false },
+    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f, true  },
+    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f, false },
+    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f, false },
 }};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -238,9 +238,10 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     setupKnob (dampingKnob,   dampingLabel,   "DAMPING");
     setupKnob (diffusionKnob, diffusionLabel, "DIFFUSION");
     setupKnob (tiltEQKnob,    tiltEQLabel,    "TILT EQ");
-    setupKnob (modRateKnob,   modRateLabel,   "MOD RATE");
+    setupKnob (modRateKnob,    modRateLabel,    "MOD RATE");
     setupKnob (modDepthKnob,  modDepthLabel,  "MOD DEPTH");
     setupKnob (mixKnob,       mixLabel,       "MIX");
+    setupKnob (decayColorKnob, decayColorLabel, "DECAY COLOR");
 
     freezeButton.setButtonText ("  FREEZE");
     addAndMakeVisible (freezeButton);
@@ -259,10 +260,11 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     dampingAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::damping,   dampingKnob);
     diffusionAttach = std::make_unique<SliderAttachment> (apvts, ParamID::diffusion, diffusionKnob);
     tiltEQAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::tiltEQ,    tiltEQKnob);
-    modRateAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::modRate,   modRateKnob);
-    modDepthAttach  = std::make_unique<SliderAttachment> (apvts, ParamID::modDepth,  modDepthKnob);
-    mixAttach       = std::make_unique<SliderAttachment> (apvts, ParamID::mix,       mixKnob);
-    freezeAttach    = std::make_unique<ButtonAttachment> (apvts, ParamID::freeze,    freezeButton);
+    modRateAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::modRate,    modRateKnob);
+    modDepthAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::modDepth,  modDepthKnob);
+    mixAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::mix,        mixKnob);
+    decayColorAttach = std::make_unique<SliderAttachment> (apvts, ParamID::decayColor, decayColorKnob);
+    freezeAttach     = std::make_unique<ButtonAttachment> (apvts, ParamID::freeze,     freezeButton);
 
     startTimerHz (20);
 }
@@ -340,6 +342,14 @@ void EtherealReverbEditor::resized()
             rightLabels[row][col]->setBounds (rPanelX + col * rColW,
                                               ky + rKnobSz + 4, rColW, 14);
         }
+    }
+
+    // ── Right panel row 3 — Decay Color knob (centred) ───────────────────
+    {
+        const int ky  = 347;
+        const int kcx = rPanelX + 207 / 2;
+        decayColorKnob.setBounds  (kcx - rKnobSz / 2, ky, rKnobSz, rKnobSz);
+        decayColorLabel.setBounds (rPanelX, ky + rKnobSz + 4, 207, 14);
     }
 
     // ── Freeze button — centred below the screen ──────────────────────────
@@ -501,10 +511,11 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         // Live impulse-response style visualization
         {
             auto& apvts = processorRef.apvts;
-            const float decayTime    = apvts.getRawParameterValue (ParamID::decay)   ->load();
-            const float dampingVal   = apvts.getRawParameterValue (ParamID::damping) ->load();
-            const float preDelayMs   = apvts.getRawParameterValue (ParamID::preDelay)->load();
-            const bool  frozen       = apvts.getRawParameterValue (ParamID::freeze)  ->load() > 0.5f;
+            const float decayTime    = apvts.getRawParameterValue (ParamID::decay)      ->load();
+            const float dampingVal   = apvts.getRawParameterValue (ParamID::damping)    ->load();
+            const float preDelayMs   = apvts.getRawParameterValue (ParamID::preDelay)   ->load();
+            const float decayColorVal= apvts.getRawParameterValue (ParamID::decayColor) ->load();
+            const bool  frozen       = apvts.getRawParameterValue (ParamID::freeze)     ->load() > 0.5f;
 
             const float margin  = 15.0f;
             const float cW      = scW - margin * 2.0f;
@@ -569,26 +580,57 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 g.drawLine (bx, midY, bx, midY + barH * n2, 1.0f);
             }
 
-            // ── High-frequency decay (driven by damping knob) ─────────────
-            // Damping causes highs to die faster — shown as a shorter red curve
-            if (!frozen && dampingVal > 0.05f)
+            // ── Frequency-dependent decay curves ─────────────────────────
+            // HF curve: damping shortens it; decayColor > 0 lengthens it (bright)
+            // LF curve: shown when decayColor < 0 (dark) — bass sustains longer
+            if (!frozen)
             {
-                const float hfDecay = decayTime * (1.0f - dampingVal * 0.75f);
-                juce::Path hfCurve;
-                for (int i = 0; i <= 300; ++i)
+                // HF decay: modulated by both damping and decay color
+                // decayColor > 0 (bright) → HF lives longer; < 0 (dark) → HF dies faster
+                const float hfDecay = decayTime
+                                    * (1.0f - dampingVal * 0.75f)
+                                    * (1.0f + decayColorVal * 0.5f);
+
+                if (dampingVal > 0.05f || decayColorVal < -0.05f)
                 {
-                    const float t      = (float) i / 300.0f;
-                    const float tSecs  = t * windowSecs;
-                    if (tSecs < preDelayMs * 0.001f) continue;
-                    const float tAdj   = tSecs - preDelayMs * 0.001f;
-                    const float amp    = std::exp (-logDecay * tAdj / hfDecay);
-                    const float px     = scX + margin + t * cW;
-                    const float py     = botY - amp * cH;
-                    if (i == 0 || hfCurve.isEmpty()) hfCurve.startNewSubPath (px, botY);
-                    hfCurve.lineTo (px, py);
+                    juce::Path hfCurve;
+                    for (int i = 0; i <= 300; ++i)
+                    {
+                        const float t     = (float) i / 300.0f;
+                        const float tSecs = t * windowSecs;
+                        if (tSecs < preDelayMs * 0.001f) continue;
+                        const float tAdj  = tSecs - preDelayMs * 0.001f;
+                        const float amp   = std::exp (-logDecay * tAdj / juce::jmax (0.01f, hfDecay));
+                        const float px    = scX + margin + t * cW;
+                        const float py    = botY - amp * cH;
+                        if (hfCurve.isEmpty()) hfCurve.startNewSubPath (px, botY);
+                        hfCurve.lineTo (px, py);
+                    }
+                    g.setColour (juce::Colour (0xffff6060).withAlpha (0.50f));
+                    g.strokePath (hfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
                 }
-                g.setColour (juce::Colour (0xffff6060).withAlpha (0.50f));
-                g.strokePath (hfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
+
+                // LF curve: only visible when decayColor < 0 (dark setting)
+                // Bass sustains longer than the main decay
+                if (decayColorVal < -0.05f)
+                {
+                    const float lfDecay = decayTime * (1.0f - decayColorVal * 0.5f);
+                    juce::Path lfCurve;
+                    for (int i = 0; i <= 300; ++i)
+                    {
+                        const float t     = (float) i / 300.0f;
+                        const float tSecs = t * windowSecs;
+                        if (tSecs < preDelayMs * 0.001f) continue;
+                        const float tAdj  = tSecs - preDelayMs * 0.001f;
+                        const float amp   = std::exp (-logDecay * tAdj / lfDecay);
+                        const float px    = scX + margin + t * cW;
+                        const float py    = botY - amp * cH;
+                        if (lfCurve.isEmpty()) lfCurve.startNewSubPath (px, botY);
+                        lfCurve.lineTo (px, py);
+                    }
+                    g.setColour (juce::Colour (0xff60c0ff).withAlpha (0.40f));
+                    g.strokePath (lfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
+                }
             }
 
             // ── Main LF envelope curve / frozen oscilloscope ─────────────
@@ -655,10 +697,16 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
             g.drawText (decayStr, (int)(scX + scW - 72.0f), (int) scY + 6, 64, 10,
                         juce::Justification::right, false);
 
-            if (!frozen && dampingVal > 0.05f)
+            if (!frozen && (dampingVal > 0.05f || decayColorVal < -0.05f))
             {
                 g.setColour (juce::Colour (0xffff6060).withAlpha (0.65f));
                 g.drawText ("HF", (int)(scX + 8.0f), (int)(botY - 22.0f), 20, 10,
+                            juce::Justification::left, false);
+            }
+            if (!frozen && decayColorVal < -0.05f)
+            {
+                g.setColour (juce::Colour (0xff60c0ff).withAlpha (0.65f));
+                g.drawText ("LF", (int)(scX + 8.0f), (int)(botY - 36.0f), 20, 10,
                             juce::Justification::left, false);
             }
         }
@@ -705,8 +753,9 @@ void EtherealReverbEditor::applyPreset (int index)
     setFloat (ParamID::diffusion, p.diffusion);
     setFloat (ParamID::modRate,   p.modRate);
     setFloat (ParamID::modDepth,  p.modDepth);
-    setFloat (ParamID::tiltEQ,    p.tiltEQ);
-    setFloat (ParamID::mix,       p.mix);
+    setFloat (ParamID::tiltEQ,      p.tiltEQ);
+    setFloat (ParamID::mix,         p.mix);
+    setFloat (ParamID::decayColor,  p.decayColor);
 
     if (auto* param = apvts.getParameter (ParamID::freeze))
         param->setValueNotifyingHost (p.freeze ? 1.0f : 0.0f);

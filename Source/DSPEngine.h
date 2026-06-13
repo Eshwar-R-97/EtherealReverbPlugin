@@ -15,9 +15,10 @@ struct DSPParams
     float diffusion { 0.5f };   // 0–1, all-pass gain (echo density)
     float modRate   { 0.5f };   // Hz,  LFO speed per comb line
     float modDepth  { 0.1f };   // 0–1, LFO displacement of delay read position
-    float tiltEQ    { 0.0f };   // -1–1, shelving EQ inside feedback loop
-    float mix       { 0.3f };   // 0–1, dry/wet
-    bool  freeze    { false };  // locks feedback at unity, tail sustains
+    float tiltEQ     { 0.0f };   // -1–1, shelving EQ inside feedback loop
+    float mix        { 0.3f };   // 0–1, dry/wet
+    float decayColor { 0.0f };   // -1=dark (bass sustains), 0=neutral, +1=bright (HF sustains)
+    bool  freeze     { false };  // locks feedback at unity, tail sustains
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,6 +104,9 @@ private:
 
     // 1-pole lowpass state per tap — implements the damping parameter
     std::array<float, kNumTaps> fdnDampState {};
+
+    // 1-pole lowpass at ~300Hz per tap — tracks LF content for decay color
+    std::array<float, kNumTaps> fdnLFState {};
 
     // ── All-pass filters: 2 per channel, run in series ───────────────────
     static constexpr int kNumAllPass = 2;

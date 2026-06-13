@@ -35,6 +35,7 @@ void DSPEngine::reset()
     for (auto& line : fdnLines)      line.reset();
     for (auto& line : allPassLines)  line.reset();
     fdnDampState.fill (0.0f);
+    fdnLFState.fill (0.0f);
     tiltState.fill (0.0f);
     for (int k = 0; k < kNumTaps; ++k)
         lfoPhases[(size_t) k] = (float) k / (float) kNumTaps;
@@ -78,6 +79,8 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     const float twoPi           = juce::MathConstants<float>::twoPi;
     // Householder scale factor: 2/N applied once to the summed tap outputs
     const float householderScale = 2.0f / (float) kNumTaps;
+    // LF tracking filter: 1-pole LP at ~300Hz — isolates bass for decay color
+    const float lfCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 300.0f / sr);
 
     for (int n = 0; n < numSamples; ++n)
     {
@@ -120,13 +123,28 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         float v[kNumTaps];
         for (int i = 0; i < kNumTaps; ++i) v[i] = y[i] - tapSum;
 
-        // Apply per-tap damping LP and RT60 gain, then write back
+        // Apply per-tap damping LP, LF tracking LP, decay color blend, then write back
         // Taps 0-3 are driven by wetL, taps 4-7 by wetR
         for (int i = 0; i < kNumTaps; ++i)
         {
+            // HF damping LP (existing) — higher damping = more HF removed from feedback
             fdnDampState[i] = params.damping         * fdnDampState[i]
                             + (1.0f - params.damping) * v[i];
-            const float fb    = params.freeze ? v[i] : fdnDampState[i] * fdnG[i];
+
+            // LF tracking LP at ~300Hz — captures the bass content of the signal
+            fdnLFState[i] = lfCoeff * fdnLFState[i] + (1.0f - lfCoeff) * v[i];
+
+            // Decay color blends between three feedback signals:
+            //  +1 (bright):  feed back v[i] directly — HF rolloff bypassed, highs sustain
+            //   0 (neutral): feed back fdnDampState[i] — existing damping behavior
+            //  -1 (dark):    feed back fdnLFState[i] — only bass survives in the loop
+            float fbSig;
+            if (params.decayColor >= 0.0f)
+                fbSig = fdnDampState[i] * (1.0f - params.decayColor) + v[i] * params.decayColor;
+            else
+                fbSig = fdnDampState[i] * (1.0f + params.decayColor) + fdnLFState[i] * (-params.decayColor);
+
+            const float fb    = params.freeze ? v[i] : fbSig * fdnG[i];
             const float input = (i < kNumTaps / 2) ? wetL : wetR;
             fdnLines[i].write (input + fb);
         }
