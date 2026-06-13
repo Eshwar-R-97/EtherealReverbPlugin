@@ -41,7 +41,8 @@ void DSPEngine::reset()
     for (auto& line : allPassLines)  line.reset();
     combDampState.fill (0.0f);
     tiltState.fill (0.0f);
-    lfoPhases.fill (0.0f);
+    for (int k = 0; k < kNumCombs * kNumChannels; ++k)
+        lfoPhases[(size_t) k] = (float) k / (float) (kNumCombs * kNumChannels);
 }
 
 void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& params)
@@ -83,6 +84,11 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     // Tilt EQ: 1-pole coefficient for shelf at ~1 kHz
     const float tiltCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 1000.0f / sr);
 
+    // Modulation: LFO increment per sample, max depth in samples (~0.5ms)
+    const float lfoInc         = params.modRate / sr;
+    const float modDepthSamples = params.modDepth * 24.0f;
+    const float twoPi           = juce::MathConstants<float>::twoPi;
+
     for (int n = 0; n < numSamples; ++n)
     {
         const float dryL = left[n];
@@ -97,24 +103,35 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         preDelayLines[0].write (dryL);
         preDelayLines[1].write (dryR);
 
-        // ── Stage 2: Feedback comb filter bank (4 per channel, parallel) ─
-        // Store individual outputs — Stage 3 needs them before summing.
+        // ── Stage 2 + 6: Comb filter bank with LFO modulation ────────────
+        // Advance all LFO phases first, then read with fractional delay.
+        for (int k = 0; k < kNumCombs * kNumChannels; ++k)
+        {
+            lfoPhases[(size_t) k] += lfoInc;
+            if (lfoPhases[(size_t) k] >= 1.0f)
+                lfoPhases[(size_t) k] -= 1.0f;
+        }
+
         float combOutsL[kNumCombs], combOutsR[kNumCombs];
 
         for (int i = 0; i < kNumCombs; ++i)
         {
-            // Left
-            const int   idxL = i;
-            const float outL = combLines[idxL].read (combN[idxL]);
+            // Left — modulate read position with LFO
+            const int   idxL    = i;
+            const float lfoValL = std::sin (lfoPhases[(size_t) idxL] * twoPi);
+            const float delayL  = juce::jmax (1.0f, (float) combN[idxL] + lfoValL * modDepthSamples);
+            const float outL    = combLines[idxL].readInterpolated (delayL);
             combDampState[idxL] = params.damping         * combDampState[idxL]
                                 + (1.0f - params.damping) * outL;
             const float fbL = params.freeze ? outL : combDampState[idxL] * combG[idxL];
             combLines[idxL].write (wetL + fbL);
             combOutsL[i] = outL;
 
-            // Right
-            const int   idxR = kNumCombs + i;
-            const float outR = combLines[idxR].read (combN[idxR]);
+            // Right — modulate read position with LFO
+            const int   idxR    = kNumCombs + i;
+            const float lfoValR = std::sin (lfoPhases[(size_t) idxR] * twoPi);
+            const float delayR  = juce::jmax (1.0f, (float) combN[idxR] + lfoValR * modDepthSamples);
+            const float outR    = combLines[idxR].readInterpolated (delayR);
             combDampState[idxR] = params.damping         * combDampState[idxR]
                                 + (1.0f - params.damping) * outR;
             const float fbR = params.freeze ? outR : combDampState[idxR] * combG[idxR];
