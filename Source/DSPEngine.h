@@ -173,9 +173,20 @@ private:
     static constexpr float kVoiceRatios[5]  = { 1.0f, 1.5f, 2.0f, 2.5f, 3.0f };
     // Descending amplitude so overtones decay naturally like a real harmonic series
     static constexpr float kVoiceWeights[5] = { 1.0f, 0.65f, 0.45f, 0.30f, 0.20f };
+    // Micro-detune per voice in ratio form (cents: 0, +4, -3, +6, -5)
+    // Gives each voice a unique tuning so they beat against each other organically
+    static constexpr float kVoiceDetuneRatios[5] = { 1.0f, 1.002313f, 0.998268f, 1.003467f, 0.997114f };
+    // Slow LFO rates per voice (Hz) — different primes so they never phase-lock
+    static constexpr float kVoiceLFORates[5]     = { 0.07f, 0.11f, 0.05f, 0.13f, 0.09f };
+    // LP filter cutoffs per voice (Hz) — higher harmonics are progressively darker
+    static constexpr float kVoiceLPCutoffs[5]    = { 7000.0f, 5000.0f, 3500.0f, 2500.0f, 1800.0f };
 
     std::array<GranularShimmer, kMaxVoices * 2> granular;
     std::array<SSBShimmer, 2>                   ssb;
+    // Per-voice LP filter states (kMaxVoices × stereo)
+    std::array<float, kMaxVoices * 2> voiceLPState {};
+    // Per-voice slow pitch LFO phases (0..1)
+    std::array<float, kMaxVoices>     shimVoiceLFOPhases {};
     float shimFeedbackL { 0.0f };
     float shimFeedbackR { 0.0f };
     // 1-pole HP states on the shimmer feedback path — removes sub-bass that

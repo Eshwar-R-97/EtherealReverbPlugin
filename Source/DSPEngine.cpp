@@ -128,6 +128,8 @@ void DSPEngine::reset()
         lfoPhases[(size_t) k] = (float) k / (float) kNumTaps;
     for (auto& g : granular)  g.reset();
     for (auto& s : ssb)       s.reset();
+    voiceLPState.fill (0.0f);
+    shimVoiceLFOPhases.fill (0.0f);
     shimFeedbackL = shimFeedbackR = 0.0f;
     shimHPL       = shimHPR       = 0.0f;
 }
@@ -172,6 +174,16 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     const float householderScale = 2.0f / (float) kNumTaps;
     // LF tracking filter: 1-pole LP at ~300Hz — isolates bass for decay color
     const float lfCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 300.0f / sr);
+
+    // Per-voice shimmer naturalisation — computed once per block
+    // Method 1: progressive LP darkening of each harmonic voice
+    float voiceLPCoeff[kMaxVoices];
+    for (int v = 0; v < kMaxVoices; ++v)
+        voiceLPCoeff[v] = 1.0f - (twoPi * kVoiceLPCutoffs[v] / sr);
+    // Method 3: slow pitch LFO increments per voice
+    float voiceLFOInc[kMaxVoices];
+    for (int v = 0; v < kMaxVoices; ++v)
+        voiceLFOInc[v] = kVoiceLFORates[v] / sr;
 
     for (int n = 0; n < numSamples; ++n)
     {
@@ -260,15 +272,19 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         wetR = (y[4] + y[5] + y[6] + y[7]) * 0.25f;
 
         // ── Shimmer: compute pitch-shifted feedback for next sample ───────
-        // Active voices are weighted and summed; inactive voices advance silently
-        // to prevent stale-data pops when the voices count is increased.
+        // Method 3: advance slow pitch LFOs for all voices every sample
+        for (int v = 0; v < kMaxVoices; ++v)
+        {
+            shimVoiceLFOPhases[v] += voiceLFOInc[v];
+            if (shimVoiceLFOPhases[v] >= 1.0f) shimVoiceLFOPhases[v] -= 1.0f;
+        }
+
         if (params.shimmer > 0.001f)
         {
             const float phaseInc = twoPi * params.shimmerShiftHz / sr;
             const float charAmt  = params.shimmerChar;
             const int   numV     = params.shimmerVoices;
 
-            // Compute normalised weight sum for the active voices
             float wSum = 0.0f;
             for (int v = 0; v < numV; ++v) wSum += kVoiceWeights[v];
             const float invW = 1.0f / wSum;
@@ -276,14 +292,31 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
             float granL = 0.0f, granR = 0.0f;
             for (int v = 0; v < numV; ++v)
             {
-                const float ratio = params.shimmerPitch * kVoiceRatios[v];
-                granL += granular[(size_t)(v * 2 + 0)].process (wetL, ratio) * kVoiceWeights[v];
-                granR += granular[(size_t)(v * 2 + 1)].process (wetR, ratio) * kVoiceWeights[v];
+                // Method 3: ±0.5% pitch wobble via slow per-voice LFO
+                const float lfoMod = 1.0f + 0.005f * std::sin (shimVoiceLFOPhases[v] * twoPi);
+                // Method 2: stable micro-detune per voice (different for each harmonic)
+                const float ratio  = params.shimmerPitch
+                                   * kVoiceRatios[v]
+                                   * kVoiceDetuneRatios[v]
+                                   * lfoMod;
+
+                float outL = granular[(size_t)(v * 2 + 0)].process (wetL, ratio);
+                float outR = granular[(size_t)(v * 2 + 1)].process (wetR, ratio);
+
+                // Method 1: per-voice LP filter — higher voices progressively darker
+                auto& lpL = voiceLPState[(size_t)(v * 2 + 0)];
+                auto& lpR = voiceLPState[(size_t)(v * 2 + 1)];
+                const float c = voiceLPCoeff[v];
+                lpL = c * lpL + (1.0f - c) * outL;
+                lpR = c * lpR + (1.0f - c) * outR;
+
+                granL += lpL * kVoiceWeights[v];
+                granR += lpR * kVoiceWeights[v];
             }
             granL *= invW;
             granR *= invW;
 
-            // Advance inactive voices silently to keep buffers warm
+            // Advance inactive voices silently to keep granular buffers warm
             for (int v = numV; v < kMaxVoices; ++v)
             {
                 const float ratio = params.shimmerPitch * kVoiceRatios[v];
@@ -299,7 +332,6 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         }
         else
         {
-            // Keep all buffers advancing silently
             for (int v = 0; v < kMaxVoices; ++v)
             {
                 const float ratio = params.shimmerPitch * kVoiceRatios[v];
