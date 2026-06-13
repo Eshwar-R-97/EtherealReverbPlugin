@@ -6,16 +6,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
+# Allow pre-cloned JUCE to be used without re-downloading
+set(FETCHCONTENT_SOURCE_DIR_JUCE "${CMAKE_BINARY_DIR}/_deps/juce-src" CACHE PATH "")
+
 FetchContent_Declare(
     JUCE
     GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-    GIT_TAG        7.0.12
+    GIT_TAG        8.0.7
+    GIT_SHALLOW    TRUE
+    GIT_PROGRESS   TRUE
 )
 
 FetchContent_Declare(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     GIT_TAG        v3.4.0
+    GIT_SHALLOW    TRUE
+    GIT_PROGRESS   TRUE
 )
 
 FetchContent_MakeAvailable(JUCE Catch2)
@@ -30,11 +37,13 @@ juce_add_plugin(EtherealReverb
     COPY_PLUGIN_AFTER_BUILD     TRUE
     PLUGIN_MANUFACTURER_CODE    Eshr
     PLUGIN_CODE                 Ervb
-    FORMATS                     AU VST3
+    FORMATS                     AU VST3 Standalone
     PRODUCT_NAME                "Ethereal Reverb"
     VST3_CATEGORIES             "Fx|Reverb"
     AU_MAIN_TYPE                kAudioUnitType_Effect
 )
+
+juce_generate_juce_header(EtherealReverb)
 
 target_sources(EtherealReverb
     PRIVATE

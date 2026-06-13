@@ -76,6 +76,7 @@ struct CircularBuffer
 class DSPEngine
 {
 public:
+    DSPEngine() = default;
     void prepare (double sampleRate, int maxBlockSize);
     void reset();
     void process (juce::AudioBuffer<float>& buffer, const DSPParams& params);
