@@ -4,6 +4,8 @@ An algorithmic reverb plugin by Eshwar Rajasekar — available for **FL Studio**
 
 Made for learning how to build audio plugins, if you have any suggestions open an issue and I'll try to specialize this plugin to that!
 
+Also feel free to drop any issues if you find any bugs!
+
 ---
 
 ## How to Install
