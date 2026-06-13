@@ -20,6 +20,7 @@ namespace ParamID
     static const juce::String shimmerShiftHz { "shimmerShiftHz" };
     static const juce::String shimmerVoices  { "shimmerVoices"  };
     static const juce::String freeze         { "freeze"         };
+    static const juce::String reverse        { "reverse"        };
 }
 
 class EtherealReverbProcessor : public juce::AudioProcessor
@@ -57,6 +58,7 @@ public:
 
 private:
     DSPEngine dspEngine;
+    int       lastReportedLatency { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EtherealReverbProcessor)
 };

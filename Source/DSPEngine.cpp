@@ -133,6 +133,10 @@ void DSPEngine::reset()
     shimVoiceLFOPhases.fill (0.0f);
     shimFeedbackL = shimFeedbackR = 0.0f;
     shimHPL       = shimHPR       = 0.0f;
+    revBufAL.fill (0.0f); revBufAR.fill (0.0f);
+    revBufBL.fill (0.0f); revBufBR.fill (0.0f);
+    revWriteSide = 0; revWritePos = 0; revReadPos = 0;
+    revBufLen = 0; revBufReady = false;
 }
 
 void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& params)
@@ -175,6 +179,20 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
     const float householderScale = 2.0f / (float) kNumTaps;
     // LF tracking filter: 1-pole LP at ~300Hz — isolates bass for decay color
     const float lfCoeff = 1.0f - (juce::MathConstants<float>::twoPi * 300.0f / sr);
+
+    // Reverse reverb: update ping-pong buffer length if preDelay changed
+    if (params.reverse)
+    {
+        const int newLen = juce::jlimit (1, kMaxRevSamples,
+                                         juce::jmax (1, (int) (params.preDelay * 0.001f * sr)));
+        if (newLen != revBufLen)
+        {
+            revBufLen   = newLen;
+            revWritePos = 0; revReadPos = 0; revBufReady = false;
+            revBufAL.fill (0.0f); revBufAR.fill (0.0f);
+            revBufBL.fill (0.0f); revBufBR.fill (0.0f);
+        }
+    }
 
     // Bloom envelope coefficients — computed once per block
     const float bloomAttackCoeff  = std::exp (-1.0f / (0.040f * sr)); // 40ms attack
@@ -243,8 +261,40 @@ void DSPEngine::process (juce::AudioBuffer<float>& buffer, const DSPParams& para
         const float shimClipL = std::tanh (shimFeedbackL - shimHPL);
         const float shimClipR = std::tanh (shimFeedbackR - shimHPR);
         const float shimScale  = params.shimmer * 0.15f;
-        const float fdnInputL  = wetL + shimClipL * shimScale;
-        const float fdnInputR  = wetR + shimClipR * shimScale;
+
+        // ── Reverse reverb: fill ping-pong buffer, read reversed chunk ───────
+        // Both the normal (forward) and reversed signals feed the FDN in parallel.
+        // The reversed chunk is scaled at 0.5 to maintain consistent loudness.
+        float revL = 0.0f, revR = 0.0f;
+        if (params.reverse && revBufLen > 0)
+        {
+            float* wBufL = (revWriteSide == 0) ? revBufAL.data() : revBufBL.data();
+            float* wBufR = (revWriteSide == 0) ? revBufAR.data() : revBufBR.data();
+            float* rBufL = (revWriteSide == 0) ? revBufBL.data() : revBufAL.data();
+            float* rBufR = (revWriteSide == 0) ? revBufBR.data() : revBufAR.data();
+
+            wBufL[revWritePos] = wetL;
+            wBufR[revWritePos] = wetR;
+
+            if (revBufReady)
+            {
+                revL = rBufL[revReadPos] * 0.5f;
+                revR = rBufR[revReadPos] * 0.5f;
+                revReadPos = (revReadPos + 1) % revBufLen;
+            }
+
+            if (++revWritePos >= revBufLen)
+            {
+                std::reverse (wBufL, wBufL + revBufLen);
+                std::reverse (wBufR, wBufR + revBufLen);
+                revWriteSide = 1 - revWriteSide;
+                revWritePos  = 0; revReadPos = 0;
+                revBufReady  = true;
+            }
+        }
+
+        const float fdnInputL  = wetL + shimClipL * shimScale + revL;
+        const float fdnInputR  = wetR + shimClipR * shimScale + revR;
 
         // Apply per-tap damping LP, LF tracking LP, decay color blend, then write back
         // Taps 0-3 are driven by fdnInputL, taps 4-7 by fdnInputR

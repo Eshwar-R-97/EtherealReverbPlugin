@@ -79,6 +79,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout EtherealReverbProcessor::cre
     params.push_back (std::make_unique<juce::AudioParameterBool> (
         juce::ParameterID { ParamID::freeze, 1 }, "Freeze", false));
 
+    params.push_back (std::make_unique<juce::AudioParameterBool> (
+        juce::ParameterID { ParamID::reverse, 1 }, "Reverse", false));
+
     return { params.begin(), params.end() };
 }
 
@@ -131,6 +134,17 @@ void EtherealReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     params.shimmerShiftHz = apvts.getRawParameterValue (ParamID::shimmerShiftHz)->load();
     params.shimmerVoices  = (int) apvts.getRawParameterValue (ParamID::shimmerVoices)->load() + 1;
     params.freeze         = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
+    params.reverse        = apvts.getRawParameterValue (ParamID::reverse)->load() > 0.5f;
+
+    // Report reverse-reverb latency (one ping-pong buffer = preDelay ms) to DAW
+    const int newLatency = params.reverse
+        ? juce::jlimit (1, 15000, juce::jmax (1, (int) (params.preDelay * 0.001 * getSampleRate())))
+        : 0;
+    if (newLatency != lastReportedLatency)
+    {
+        setLatencySamples (newLatency);
+        lastReportedLatency = newLatency;
+    }
 
     dspEngine.process (buffer, params);
 }

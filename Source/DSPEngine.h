@@ -24,6 +24,7 @@ struct DSPParams
     float shimmerShiftHz{ 15.0f };  // SSB frequency offset in Hz (5–50)
     int   shimmerVoices { 1 };      // 1–5 harmonic voices stacked above base pitch
     bool  freeze        { false };  // locks feedback at unity, tail sustains
+    bool  reverse       { false };  // reverse reverb: ping-pong input buffer runs backwards through FDN in parallel
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -198,6 +199,19 @@ private:
     // accumulates in the recirculation loop and causes low-end saturation
     float shimHPL { 0.0f };
     float shimHPR { 0.0f };
+
+    // ── Reverse reverb ping-pong buffers ────────────────────────────────────
+    // Two stereo buffer pairs alternate: one fills with pre-delay output,
+    // the other (just completed) is reversed in-place then read additively
+    // into the FDN input, in parallel with the normal forward signal.
+    static constexpr int kMaxRevSamples = 15000; // ~156ms headroom at 96kHz
+    std::array<float, kMaxRevSamples> revBufAL {}, revBufAR {};
+    std::array<float, kMaxRevSamples> revBufBL {}, revBufBR {};
+    int  revWriteSide { 0 };   // 0 = writing A / reading B, 1 = writing B / reading A
+    int  revWritePos  { 0 };
+    int  revReadPos   { 0 };
+    int  revBufLen    { 0 };
+    bool revBufReady  { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DSPEngine)
 };
