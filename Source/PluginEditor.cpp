@@ -4,17 +4,17 @@
 //  Preset table
 // ─────────────────────────────────────────────────────────────────────────────
 static const std::array<Preset, 10> kPresets = {{
-    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix   dColor  frz
-    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f, false },
-    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f, false },
-    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f, false },
-    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f, false },
-    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f, false },
-    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f, false },
-    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f, false },
-    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f, true  },
-    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f, false },
-    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f, false },
+    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix   dColor  shimmer  shPitch shChar  shHz   frz
+    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f,  0.65f,  2.0f,  0.50f, 15.0f, false },
+    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f,  0.40f,  2.0f,  0.60f, 20.0f, true  },
+    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f,  0.00f,  2.0f,  0.30f, 15.0f, false },
+    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f,  0.30f,  1.5f,  0.20f, 10.0f, false },
 }};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -230,18 +230,22 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     setLookAndFeel (&laf);
-    setSize (800, 480);
+    setSize (800, 540);
 
-    setupKnob (preDelayKnob,  preDelayLabel,  "PRE-DELAY");
-    setupKnob (roomSizeKnob,  roomSizeLabel,  "ROOM SIZE");
-    setupKnob (decayKnob,     decayLabel,     "DECAY");
-    setupKnob (dampingKnob,   dampingLabel,   "DAMPING");
-    setupKnob (diffusionKnob, diffusionLabel, "DIFFUSION");
-    setupKnob (tiltEQKnob,    tiltEQLabel,    "TILT EQ");
-    setupKnob (modRateKnob,    modRateLabel,    "MOD RATE");
-    setupKnob (modDepthKnob,  modDepthLabel,  "MOD DEPTH");
-    setupKnob (mixKnob,       mixLabel,       "MIX");
-    setupKnob (decayColorKnob, decayColorLabel, "DECAY COLOR");
+    setupKnob (preDelayKnob,      preDelayLabel,      "PRE-DELAY");
+    setupKnob (roomSizeKnob,      roomSizeLabel,      "ROOM SIZE");
+    setupKnob (decayKnob,         decayLabel,         "DECAY");
+    setupKnob (dampingKnob,       dampingLabel,       "DAMPING");
+    setupKnob (diffusionKnob,     diffusionLabel,     "DIFFUSION");
+    setupKnob (tiltEQKnob,        tiltEQLabel,        "TILT EQ");
+    setupKnob (modRateKnob,       modRateLabel,       "MOD RATE");
+    setupKnob (modDepthKnob,      modDepthLabel,      "MOD DEPTH");
+    setupKnob (mixKnob,           mixLabel,           "MIX");
+    setupKnob (decayColorKnob,    decayColorLabel,    "DECAY COLOR");
+    setupKnob (shimmerKnob,       shimmerLabel,       "SHIMMER");
+    setupKnob (shimmerPitchKnob,  shimmerPitchLabel,  "PITCH");
+    setupKnob (shimmerCharKnob,   shimmerCharLabel,   "CHARACTER");
+    setupKnob (shimmerShiftHzKnob, shimmerShiftHzLabel, "SHIFT HZ");
 
     freezeButton.setButtonText ("  FREEZE");
     addAndMakeVisible (freezeButton);
@@ -254,17 +258,21 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     addAndMakeVisible (presetBox);
 
     auto& apvts = processorRef.apvts;
-    preDelayAttach  = std::make_unique<SliderAttachment> (apvts, ParamID::preDelay,  preDelayKnob);
-    roomSizeAttach  = std::make_unique<SliderAttachment> (apvts, ParamID::roomSize,  roomSizeKnob);
-    decayAttach     = std::make_unique<SliderAttachment> (apvts, ParamID::decay,     decayKnob);
-    dampingAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::damping,   dampingKnob);
-    diffusionAttach = std::make_unique<SliderAttachment> (apvts, ParamID::diffusion, diffusionKnob);
-    tiltEQAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::tiltEQ,    tiltEQKnob);
-    modRateAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::modRate,    modRateKnob);
-    modDepthAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::modDepth,  modDepthKnob);
-    mixAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::mix,        mixKnob);
-    decayColorAttach = std::make_unique<SliderAttachment> (apvts, ParamID::decayColor, decayColorKnob);
-    freezeAttach     = std::make_unique<ButtonAttachment> (apvts, ParamID::freeze,     freezeButton);
+    preDelayAttach       = std::make_unique<SliderAttachment> (apvts, ParamID::preDelay,       preDelayKnob);
+    roomSizeAttach       = std::make_unique<SliderAttachment> (apvts, ParamID::roomSize,       roomSizeKnob);
+    decayAttach          = std::make_unique<SliderAttachment> (apvts, ParamID::decay,          decayKnob);
+    dampingAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::damping,        dampingKnob);
+    diffusionAttach      = std::make_unique<SliderAttachment> (apvts, ParamID::diffusion,      diffusionKnob);
+    tiltEQAttach         = std::make_unique<SliderAttachment> (apvts, ParamID::tiltEQ,         tiltEQKnob);
+    modRateAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::modRate,        modRateKnob);
+    modDepthAttach       = std::make_unique<SliderAttachment> (apvts, ParamID::modDepth,       modDepthKnob);
+    mixAttach            = std::make_unique<SliderAttachment> (apvts, ParamID::mix,            mixKnob);
+    decayColorAttach     = std::make_unique<SliderAttachment> (apvts, ParamID::decayColor,     decayColorKnob);
+    shimmerAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::shimmer,        shimmerKnob);
+    shimmerPitchAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerPitch,   shimmerPitchKnob);
+    shimmerCharAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerChar,    shimmerCharKnob);
+    shimmerShiftHzAttach = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerShiftHz, shimmerShiftHzKnob);
+    freezeAttach         = std::make_unique<ButtonAttachment> (apvts, ParamID::freeze,         freezeButton);
 
     startTimerHz (20);
 }
@@ -298,10 +306,10 @@ void EtherealReverbEditor::resized()
     constexpr int lKnobSz  = 80;
     constexpr int lPanelX  = 5;
     constexpr int lPanelW  = 205;
-    constexpr int lKnobCX  = lPanelX + lPanelW / 2;   // = 107
-    constexpr int lKnobX   = lKnobCX - lKnobSz / 2;   // = 67
+    constexpr int lKnobCX  = lPanelX + lPanelW / 2;
+    constexpr int lKnobX   = lKnobCX - lKnobSz / 2;
 
-    const int leftKnobY[] = { 88, 203, 318 };
+    const int leftKnobY[] = { 88, 228, 368 };
     juce::Slider* leftKnobs[]  = { &preDelayKnob,  &roomSizeKnob,  &decayKnob  };
     juce::Label*  leftLabels[] = { &preDelayLabel,  &roomSizeLabel, &decayLabel };
 
@@ -311,51 +319,71 @@ void EtherealReverbEditor::resized()
         leftLabels[i]->setBounds (lPanelX, leftKnobY[i] + lKnobSz + 4, lPanelW, 14);
     }
 
-    // ── Right panel — 3 cols × 2 rows ─────────────────────────────────────
-    constexpr int rKnobSz = 62;
+    // ── Right panel ───────────────────────────────────────────────────────
     constexpr int rPanelX = 590;
-    constexpr int rColW   = 69;                        // 3 cols × 69 = 207
+    constexpr int rColW   = 69;   // 3 cols × 69 = 207px total
 
     const int rColCX[] = {
         rPanelX + rColW / 2,
         rPanelX + rColW + rColW / 2,
         rPanelX + 2 * rColW + rColW / 2
-    };                                                 // { 624, 693, 762 }
-
-    const int rightKnobY[] = { 93, 220 };
-    juce::Slider* rightKnobs[2][3] = {
-        { &dampingKnob,  &diffusionKnob, &tiltEQKnob },
-        { &modRateKnob,  &modDepthKnob,  &mixKnob    }
-    };
-    juce::Label* rightLabels[2][3] = {
-        { &dampingLabel,  &diffusionLabel, &tiltEQLabel },
-        { &modRateLabel,  &modDepthLabel,  &mixLabel    }
     };
 
-    for (int row = 0; row < 2; ++row)
+    // Row 1 — Damping, Diffusion, TiltEQ (knobSz=58)
     {
+        constexpr int ky = 88, sz = 58;
+        juce::Slider* knobs[]  = { &dampingKnob,  &diffusionKnob, &tiltEQKnob  };
+        juce::Label*  labels[] = { &dampingLabel, &diffusionLabel, &tiltEQLabel };
         for (int col = 0; col < 3; ++col)
         {
-            const int kx = rColCX[col] - rKnobSz / 2;
-            const int ky = rightKnobY[row];
-            rightKnobs [row][col]->setBounds (kx, ky, rKnobSz, rKnobSz);
-            rightLabels[row][col]->setBounds (rPanelX + col * rColW,
-                                              ky + rKnobSz + 4, rColW, 14);
+            knobs[col]->setBounds  (rColCX[col] - sz / 2, ky, sz, sz);
+            labels[col]->setBounds (rPanelX + col * rColW, ky + sz + 4, rColW, 14);
         }
     }
 
-    // ── Right panel row 3 — Decay Color knob (centred) ───────────────────
+    // Row 2 — ModRate, ModDepth, Mix (knobSz=58)
     {
-        const int ky  = 347;
-        const int kcx = rPanelX + 207 / 2;
-        decayColorKnob.setBounds  (kcx - rKnobSz / 2, ky, rKnobSz, rKnobSz);
-        decayColorLabel.setBounds (rPanelX, ky + rKnobSz + 4, 207, 14);
+        constexpr int ky = 168, sz = 58;
+        juce::Slider* knobs[]  = { &modRateKnob,  &modDepthKnob, &mixKnob  };
+        juce::Label*  labels[] = { &modRateLabel, &modDepthLabel, &mixLabel };
+        for (int col = 0; col < 3; ++col)
+        {
+            knobs[col]->setBounds  (rColCX[col] - sz / 2, ky, sz, sz);
+            labels[col]->setBounds (rPanelX + col * rColW, ky + sz + 4, rColW, 14);
+        }
     }
 
-    // ── Freeze button — centred below the screen ──────────────────────────
-    // Screen centre X = 220 + 360/2 = 400
+    // Row 3 — Decay Color (centred, knobSz=52)
+    {
+        constexpr int ky = 258, sz = 52;
+        const int kcx = rPanelX + 207 / 2;
+        decayColorKnob.setBounds  (kcx - sz / 2, ky, sz, sz);
+        decayColorLabel.setBounds (rPanelX, ky + sz + 4, 207, 14);
+    }
+
+    // Row 4 — Shimmer, ShimmerPitch, ShimmerChar (knobSz=50)
+    {
+        constexpr int ky = 350, sz = 50;
+        juce::Slider* knobs[]  = { &shimmerKnob,  &shimmerPitchKnob, &shimmerCharKnob  };
+        juce::Label*  labels[] = { &shimmerLabel, &shimmerPitchLabel, &shimmerCharLabel };
+        for (int col = 0; col < 3; ++col)
+        {
+            knobs[col]->setBounds  (rColCX[col] - sz / 2, ky, sz, sz);
+            labels[col]->setBounds (rPanelX + col * rColW, ky + sz + 4, rColW, 14);
+        }
+    }
+
+    // Row 5 — ShimmerShiftHz (centred, knobSz=46)
+    {
+        constexpr int ky = 428, sz = 46;
+        const int kcx = rPanelX + 207 / 2;
+        shimmerShiftHzKnob.setBounds  (kcx - sz / 2, ky, sz, sz);
+        shimmerShiftHzLabel.setBounds (rPanelX, ky + sz + 4, 207, 14);
+    }
+
+    // ── Freeze button — below the visualization screen ────────────────────
     constexpr int freezeW = 230, freezeH = 50;
-    freezeButton.setBounds (400 - freezeW / 2, 338, freezeW, freezeH);
+    freezeButton.setBounds (400 - freezeW / 2, 390, freezeW, freezeH);
 }
 
 void EtherealReverbEditor::paint (juce::Graphics& g)
@@ -411,6 +439,18 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colour (EtherealLookAndFeel::kAccent).withAlpha (0.65f));
     g.drawText ("CHARACTER & MOTION", 588, 70, 207, 13, juce::Justification::centred, false);
 
+    // Right panel section sub-headers
+    g.setFont (juce::Font (juce::FontOptions{}.withHeight (8.5f).withStyle ("Bold")));
+    g.setColour (juce::Colour (EtherealLookAndFeel::kAccent).withAlpha (0.40f));
+    g.drawText ("TEXTURE",  588, 244, 207, 11, juce::Justification::centred, false);
+    g.setColour (juce::Colour (0xff8040ff).withAlpha (0.55f));
+    g.drawText ("SHIMMER",  588, 336, 207, 11, juce::Justification::centred, false);
+
+    // Thin separator lines above section headers
+    g.setColour (juce::Colour (0xff1a1a30));
+    g.drawLine (594.0f, 242.0f, 789.0f, 242.0f, 0.75f);
+    g.drawLine (594.0f, 334.0f, 789.0f, 334.0f, 0.75f);
+
     // ── Header divider ────────────────────────────────────────────────────
     g.setColour (juce::Colour (EtherealLookAndFeel::kAccentDim));
     g.drawLine (0.0f, 62.0f, (float) W, 62.0f, 1.0f);
@@ -426,18 +466,15 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
         juce::Path textPath;
         ga.createPath (textPath);
 
-        // Clip all subsequent drawing to the letter interiors
         g.saveState();
         g.reduceClipRegion (textPath);
 
-        // Blue-to-black gradient fill
         juce::ColourGradient titleGrad (
             juce::Colour (0xff1a52a8), 18.0f,  4.0f,
             juce::Colour (0xff000018), 18.0f, 58.0f, false);
         g.setGradientFill (titleGrad);
         g.fillRect (8, 0, 530, 62);
 
-        // Overlapping sine wave lines (visible only inside letters)
         for (float fy = 1.0f; fy < 62.0f; fy += 3.2f)
         {
             juce::Path sinPath;
@@ -458,11 +495,9 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
 
         g.restoreState();
 
-        // Subtle path outline for sharpness
         g.setColour (juce::Colour (0xff2050a0).withAlpha (0.55f));
         g.strokePath (textPath, juce::PathStrokeType (0.5f));
 
-        // Byline
         g.setFont (juce::Font (juce::FontOptions{}.withHeight (10.5f)));
         g.setColour (juce::Colour (0xff505068));
         g.drawText ("by Eshwar", 22, 47, 200, 13, juce::Justification::centredLeft, false);
@@ -470,7 +505,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
 
     // ── Decay visualization screen ────────────────────────────────────────
     {
-        constexpr float scX = 220.0f, scY = 70.0f, scW = 360.0f, scH = 250.0f;
+        constexpr float scX = 220.0f, scY = 70.0f, scW = 360.0f, scH = 270.0f;
         constexpr float scCorner = 8.0f;
 
         // Outer shadow
@@ -486,7 +521,6 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
             g.fillRoundedRectangle (scX - 2.5f, scY - 2.5f, scW + 5.0f, scH + 5.0f, scCorner + 1.5f);
         }
 
-        // Screen dark background
         g.setColour (juce::Colour (0xff030509));
         g.fillRoundedRectangle (scX, scY, scW, scH, scCorner);
 
@@ -508,27 +542,26 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
             g.drawLine (scX + 2.0f, gy, scX + scW - 2.0f, gy, 1.0f);
         }
 
-        // Live impulse-response style visualization
+        // Live visualization
         {
             auto& apvts = processorRef.apvts;
             const float decayTime    = apvts.getRawParameterValue (ParamID::decay)      ->load();
             const float dampingVal   = apvts.getRawParameterValue (ParamID::damping)    ->load();
             const float preDelayMs   = apvts.getRawParameterValue (ParamID::preDelay)   ->load();
             const float decayColorVal= apvts.getRawParameterValue (ParamID::decayColor) ->load();
+            const float shimmerVal   = apvts.getRawParameterValue (ParamID::shimmer)    ->load();
             const bool  frozen       = apvts.getRawParameterValue (ParamID::freeze)     ->load() > 0.5f;
 
             const float margin  = 15.0f;
             const float cW      = scW - margin * 2.0f;
             const float cH      = scH - margin * 2.0f - 8.0f;
             const float topY    = scY + margin;
-            const float midY    = topY + cH * 0.5f;  // waveform centre line
+            const float midY    = topY + cH * 0.5f;
             const float botY    = topY + cH;
 
-            // Dynamic window: always show a bit past the RT60 point, max 60s
             const float windowSecs = juce::jmin (decayTime * 1.4f + 1.0f, 60.0f);
             const float logDecay   = 3.0f * std::log (10.0f);
 
-            // Envelope function (returns 0..1 amplitude at time tSecs)
             auto envelope = [&] (float tSecs) -> float
             {
                 if (frozen) return 1.0f;
@@ -537,20 +570,18 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 return std::exp (-logDecay * t / decayTime);
             };
 
-            // ── Pre-delay dead zone ───────────────────────────────────────
+            // Pre-delay dead zone
             const float preDelayFrac = (preDelayMs * 0.001f) / windowSecs;
             if (preDelayFrac > 0.005f)
             {
                 g.setColour (juce::Colour (0xff000000).withAlpha (0.3f));
-                g.fillRect (scX + margin, topY,
-                            preDelayFrac * cW, cH);
+                g.fillRect (scX + margin, topY, preDelayFrac * cW, cH);
                 g.setColour (juce::Colour (0xff004040).withAlpha (0.6f));
                 g.drawLine (scX + margin + preDelayFrac * cW, topY,
                             scX + margin + preDelayFrac * cW, botY, 1.0f);
             }
 
-            // ── Impulse-response waveform bars ────────────────────────────
-            // Deterministic hash so bars don't flicker between repaints
+            // IR waveform bars
             auto hash = [] (int x) -> float
             {
                 int h = x * 1234567891 + 987654321;
@@ -565,8 +596,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 const float amp  = envelope (t * windowSecs);
                 if (amp < 0.001f) break;
 
-                // Two independent noise values for positive/negative bar halves
-                const float n1   = hash (px)       * 2.0f - 1.0f;
+                const float n1   = hash (px)        * 2.0f - 1.0f;
                 const float n2   = hash (px + 7919) * 2.0f - 1.0f;
                 const float barH = amp * cH * 0.44f;
                 const float bx   = scX + margin + (float) px;
@@ -580,13 +610,9 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 g.drawLine (bx, midY, bx, midY + barH * n2, 1.0f);
             }
 
-            // ── Frequency-dependent decay curves ─────────────────────────
-            // HF curve: damping shortens it; decayColor > 0 lengthens it (bright)
-            // LF curve: shown when decayColor < 0 (dark) — bass sustains longer
+            // Frequency-dependent decay curves
             if (!frozen)
             {
-                // HF decay: modulated by both damping and decay color
-                // decayColor > 0 (bright) → HF lives longer; < 0 (dark) → HF dies faster
                 const float hfDecay = decayTime
                                     * (1.0f - dampingVal * 0.75f)
                                     * (1.0f + decayColorVal * 0.5f);
@@ -610,8 +636,6 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                     g.strokePath (hfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
                 }
 
-                // LF curve: only visible when decayColor < 0 (dark setting)
-                // Bass sustains longer than the main decay
                 if (decayColorVal < -0.05f)
                 {
                     const float lfDecay = decayTime * (1.0f - decayColorVal * 0.5f);
@@ -631,17 +655,42 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                     g.setColour (juce::Colour (0xff60c0ff).withAlpha (0.40f));
                     g.strokePath (lfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
                 }
+
+                // Shimmer overlay: rising harmonic echoes visualised as purple arcs
+                if (shimmerVal > 0.02f)
+                {
+                    const float shimAlpha = shimmerVal * 0.55f;
+                    for (int echo = 1; echo <= 3; ++echo)
+                    {
+                        juce::Path shimPath;
+                        for (int i = 0; i <= 300; ++i)
+                        {
+                            const float t     = (float) i / 300.0f;
+                            const float tSecs = t * windowSecs;
+                            if (tSecs < preDelayMs * 0.001f) continue;
+                            const float tAdj  = tSecs - preDelayMs * 0.001f;
+                            const float amp   = std::exp (-logDecay * tAdj / decayTime)
+                                              * shimmerVal
+                                              * (1.0f - (float) (echo - 1) * 0.28f);
+                            const float riseFrac = (float) echo * 0.12f;
+                            const float riseY    = cH * riseFrac * amp;
+                            const float px       = scX + margin + t * cW;
+                            const float py       = botY - amp * cH - riseY;
+                            if (shimPath.isEmpty()) shimPath.startNewSubPath (px, botY);
+                            shimPath.lineTo (px, py);
+                        }
+                        g.setColour (juce::Colour (0xff8040ff).withAlpha (shimAlpha * (1.0f - (float)(echo-1) * 0.3f)));
+                        g.strokePath (shimPath, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
+                    }
+                }
             }
 
-            // ── Main LF envelope curve / frozen oscilloscope ─────────────
+            // Main envelope curve / frozen oscilloscope
             {
                 juce::Path curve;
 
                 if (frozen)
                 {
-                    // Frozen = sustained signal at constant energy, never decaying.
-                    // Draw as a slow sine wave centred in the screen — looks like a
-                    // signal sustaining on an oscilloscope rather than a line at the top.
                     const double now = juce::Time::getMillisecondCounterHiRes() * 0.001;
                     const float  amp = cH * 0.38f;
                     const int    pts = 300;
@@ -671,8 +720,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                         const float amp   = envelope (tSecs);
                         const float px    = scX + margin + t * cW;
                         const float py    = botY - amp * cH;
-                        if (!started && tSecs < preDelayMs * 0.001f)
-                            continue;
+                        if (!started && tSecs < preDelayMs * 0.001f) continue;
                         if (!started) { curve.startNewSubPath (px, botY); started = true; }
                         curve.lineTo (px, py);
                     }
@@ -685,11 +733,11 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 }
             }
 
-            // ── Centre baseline ───────────────────────────────────────────
+            // Centre baseline
             g.setColour (juce::Colour (0x20ffffff));
             g.drawLine (scX + margin, midY, scX + margin + cW, midY, 0.5f);
 
-            // ── Labels ────────────────────────────────────────────────────
+            // Labels
             g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
             g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
             const juce::String decayStr = frozen ? "FROZEN"
@@ -709,17 +757,21 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 g.drawText ("LF", (int)(scX + 8.0f), (int)(botY - 36.0f), 20, 10,
                             juce::Justification::left, false);
             }
+            if (!frozen && shimmerVal > 0.02f)
+            {
+                g.setColour (juce::Colour (0xff8040ff).withAlpha (0.75f));
+                g.drawText ("SHIMMER", (int)(scX + 8.0f), (int)(botY - 50.0f), 55, 10,
+                            juce::Justification::left, false);
+            }
         }
 
         // Screen border
         g.setColour (juce::Colour (EtherealLookAndFeel::kAccentDim));
         g.drawRoundedRectangle (scX, scY, scW, scH, scCorner, 1.5f);
 
-        // Inner bevel highlight
         g.setColour (juce::Colour (0x1affffff));
         g.drawRoundedRectangle (scX + 1.5f, scY + 1.5f, scW - 3.0f, scH - 3.0f, scCorner - 1.0f, 0.5f);
 
-        // Screen label
         g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
         g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
         g.drawText ("DECAY VISUALIZATION", (int) scX + 8, (int) scY + 6, 200, 10,
@@ -746,16 +798,20 @@ void EtherealReverbEditor::applyPreset (int index)
             param->setValueNotifyingHost (param->convertTo0to1 (val));
     };
 
-    setFloat (ParamID::preDelay,  p.preDelay);
-    setFloat (ParamID::roomSize,  p.roomSize);
-    setFloat (ParamID::decay,     p.decay);
-    setFloat (ParamID::damping,   p.damping);
-    setFloat (ParamID::diffusion, p.diffusion);
-    setFloat (ParamID::modRate,   p.modRate);
-    setFloat (ParamID::modDepth,  p.modDepth);
-    setFloat (ParamID::tiltEQ,      p.tiltEQ);
-    setFloat (ParamID::mix,         p.mix);
-    setFloat (ParamID::decayColor,  p.decayColor);
+    setFloat (ParamID::preDelay,       p.preDelay);
+    setFloat (ParamID::roomSize,       p.roomSize);
+    setFloat (ParamID::decay,          p.decay);
+    setFloat (ParamID::damping,        p.damping);
+    setFloat (ParamID::diffusion,      p.diffusion);
+    setFloat (ParamID::modRate,        p.modRate);
+    setFloat (ParamID::modDepth,       p.modDepth);
+    setFloat (ParamID::tiltEQ,         p.tiltEQ);
+    setFloat (ParamID::mix,            p.mix);
+    setFloat (ParamID::decayColor,     p.decayColor);
+    setFloat (ParamID::shimmer,        p.shimmer);
+    setFloat (ParamID::shimmerPitch,   p.shimmerPitch);
+    setFloat (ParamID::shimmerChar,    p.shimmerChar);
+    setFloat (ParamID::shimmerShiftHz, p.shimmerShiftHz);
 
     if (auto* param = apvts.getParameter (ParamID::freeze))
         param->setValueNotifyingHost (p.freeze ? 1.0f : 0.0f);

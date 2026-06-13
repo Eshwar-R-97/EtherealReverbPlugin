@@ -7,6 +7,7 @@ struct Preset
     const char* name;
     float preDelay, roomSize, decay, damping, diffusion;
     float modRate, modDepth, tiltEQ, mix, decayColor;
+    float shimmer, shimmerPitch, shimmerChar, shimmerShiftHz;
     bool  freeze;
 };
 
@@ -75,12 +76,14 @@ private:
     juce::Slider dampingKnob,    diffusionKnob, tiltEQKnob;
     juce::Slider modRateKnob,    modDepthKnob,  mixKnob;
     juce::Slider decayColorKnob;
+    juce::Slider shimmerKnob, shimmerPitchKnob, shimmerCharKnob, shimmerShiftHzKnob;
 
     // ── Knob labels ────────────────────────────────────────────────────────
     juce::Label  preDelayLabel,   roomSizeLabel,  decayLabel;
     juce::Label  dampingLabel,    diffusionLabel, tiltEQLabel;
     juce::Label  modRateLabel,    modDepthLabel,  mixLabel;
     juce::Label  decayColorLabel;
+    juce::Label  shimmerLabel, shimmerPitchLabel, shimmerCharLabel, shimmerShiftHzLabel;
 
     // ── Freeze toggle ──────────────────────────────────────────────────────
     juce::ToggleButton freezeButton;
@@ -96,6 +99,8 @@ private:
     std::unique_ptr<SliderAttachment> dampingAttach,   diffusionAttach, tiltEQAttach;
     std::unique_ptr<SliderAttachment> modRateAttach,   modDepthAttach,  mixAttach;
     std::unique_ptr<SliderAttachment> decayColorAttach;
+    std::unique_ptr<SliderAttachment> shimmerAttach, shimmerPitchAttach,
+                                      shimmerCharAttach, shimmerShiftHzAttach;
     std::unique_ptr<ButtonAttachment> freezeAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EtherealReverbEditor)
