@@ -493,64 +493,150 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
             g.drawLine (scX + 2.0f, gy, scX + scW - 2.0f, gy, 1.0f);
         }
 
-        // Live decay curve — reads actual parameter values each repaint
+        // Live impulse-response style visualization
         {
             auto& apvts = processorRef.apvts;
-            const float decayTime = apvts.getRawParameterValue (ParamID::decay)->load();
-            const bool  frozen    = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
+            const float decayTime    = apvts.getRawParameterValue (ParamID::decay)   ->load();
+            const float dampingVal   = apvts.getRawParameterValue (ParamID::damping) ->load();
+            const float preDelayMs   = apvts.getRawParameterValue (ParamID::preDelay)->load();
+            const bool  frozen       = apvts.getRawParameterValue (ParamID::freeze)  ->load() > 0.5f;
 
-            const float margin = 15.0f;
-            const float cW     = scW - margin * 2.0f;
-            const float cH     = scH - margin * 2.0f - 8.0f;
-            const float topY   = scY + margin;
-            const float botY   = topY + cH;
+            const float margin  = 15.0f;
+            const float cW      = scW - margin * 2.0f;
+            const float cH      = scH - margin * 2.0f - 8.0f;
+            const float topY    = scY + margin;
+            const float midY    = topY + cH * 0.5f;  // waveform centre line
+            const float botY    = topY + cH;
 
-            // X-axis spans a fixed 20-second window so the slope changes visibly
-            // with the decay knob: short decay = steep drop, long decay = gentle slope.
-            constexpr float kWindowSecs = 20.0f;
-            const float logDecay = 3.0f * std::log (10.0f); // ln(1000) — RT60 exponent
+            // Dynamic window: always show a bit past the RT60 point, max 60s
+            const float windowSecs = juce::jmin (decayTime * 1.4f + 1.0f, 60.0f);
+            const float logDecay   = 3.0f * std::log (10.0f);
 
-            juce::Path curve;
-            constexpr int steps = 400;
-
-            if (frozen)
+            // Envelope function (returns 0..1 amplitude at time tSecs)
+            auto envelope = [&] (float tSecs) -> float
             {
-                // Flat line at full amplitude — tail is sustained forever
-                curve.startNewSubPath (scX + margin, topY);
-                curve.lineTo (scX + margin + cW, topY);
+                if (frozen) return 1.0f;
+                if (tSecs < preDelayMs * 0.001f) return 0.0f;
+                const float t = tSecs - preDelayMs * 0.001f;
+                return std::exp (-logDecay * t / decayTime);
+            };
+
+            // ── Pre-delay dead zone ───────────────────────────────────────
+            const float preDelayFrac = (preDelayMs * 0.001f) / windowSecs;
+            if (preDelayFrac > 0.005f)
+            {
+                g.setColour (juce::Colour (0xff000000).withAlpha (0.3f));
+                g.fillRect (scX + margin, topY,
+                            preDelayFrac * cW, cH);
+                g.setColour (juce::Colour (0xff004040).withAlpha (0.6f));
+                g.drawLine (scX + margin + preDelayFrac * cW, topY,
+                            scX + margin + preDelayFrac * cW, botY, 1.0f);
             }
-            else
+
+            // ── Impulse-response waveform bars ────────────────────────────
+            // Deterministic hash so bars don't flicker between repaints
+            auto hash = [] (int x) -> float
             {
-                for (int i = 0; i <= steps; ++i)
+                int h = x * 1234567891 + 987654321;
+                h ^= (h >> 16); h *= 0x45d9f3b; h ^= (h >> 16);
+                return ((float) (h & 0xffff)) / 65535.0f;
+            };
+
+            const int barStep = 2;
+            for (int px = 0; px < (int) cW; px += barStep)
+            {
+                const float t    = (float) px / cW;
+                const float amp  = envelope (t * windowSecs);
+                if (amp < 0.001f) break;
+
+                // Two independent noise values for positive/negative bar halves
+                const float n1   = hash (px)       * 2.0f - 1.0f;
+                const float n2   = hash (px + 7919) * 2.0f - 1.0f;
+                const float barH = amp * cH * 0.44f;
+                const float bx   = scX + margin + (float) px;
+
+                const juce::Colour barCol = frozen
+                    ? juce::Colour (0xffffaa00).withAlpha (amp * 0.55f)
+                    : juce::Colour (0xff00b4ff).withAlpha (amp * 0.45f);
+                g.setColour (barCol);
+                g.drawLine (bx, midY, bx, midY - barH * n1, 1.0f);
+                g.drawLine (bx, midY, bx, midY + barH * n2, 1.0f);
+            }
+
+            // ── High-frequency decay (driven by damping knob) ─────────────
+            // Damping causes highs to die faster — shown as a shorter red curve
+            if (!frozen && dampingVal > 0.05f)
+            {
+                const float hfDecay = decayTime * (1.0f - dampingVal * 0.75f);
+                juce::Path hfCurve;
+                for (int i = 0; i <= 300; ++i)
                 {
-                    const float t      = (float) i / (float) steps;
-                    const float tSecs  = t * kWindowSecs;
-                    const float amp    = std::exp (-logDecay * tSecs / decayTime);
+                    const float t      = (float) i / 300.0f;
+                    const float tSecs  = t * windowSecs;
+                    if (tSecs < preDelayMs * 0.001f) continue;
+                    const float tAdj   = tSecs - preDelayMs * 0.001f;
+                    const float amp    = std::exp (-logDecay * tAdj / hfDecay);
                     const float px     = scX + margin + t * cW;
                     const float py     = botY - amp * cH;
-                    if (i == 0) curve.startNewSubPath (px, topY);
-                    else        curve.lineTo (px, py);
+                    if (i == 0 || hfCurve.isEmpty()) hfCurve.startNewSubPath (px, botY);
+                    hfCurve.lineTo (px, py);
                 }
+                g.setColour (juce::Colour (0xffff6060).withAlpha (0.50f));
+                g.strokePath (hfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
             }
 
-            // Freeze uses warm amber glow; normal uses cyan
-            const juce::Colour curveCol = frozen ? juce::Colour (0xffffaa00)
-                                                 : juce::Colour (0xff00b4ff);
+            // ── Main LF envelope curve ─────────────────────────────────────
+            {
+                juce::Path curve;
+                const juce::Colour curveCol = frozen ? juce::Colour (0xffffaa00)
+                                                     : juce::Colour (0xff00b4ff);
+                if (frozen)
+                {
+                    curve.startNewSubPath (scX + margin, topY);
+                    curve.lineTo (scX + margin + cW, topY);
+                }
+                else
+                {
+                    bool started = false;
+                    for (int i = 0; i <= 400; ++i)
+                    {
+                        const float t     = (float) i / 400.0f;
+                        const float tSecs = t * windowSecs;
+                        const float amp   = envelope (tSecs);
+                        const float px    = scX + margin + t * cW;
+                        const float py    = botY - amp * cH;
+                        if (!started && amp < 0.001f && tSecs < preDelayMs * 0.001f)
+                            continue;
+                        if (!started) { curve.startNewSubPath (px, botY); started = true; }
+                        curve.lineTo (px, py);
+                    }
+                }
+                g.setColour (curveCol.withAlpha (0.08f));
+                g.strokePath (curve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
+                g.setColour (curveCol.withAlpha (0.18f));
+                g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
+                g.setColour (curveCol.withAlpha (0.92f));
+                g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
+            }
 
-            g.setColour (curveCol.withAlpha (0.07f));
-            g.strokePath (curve, juce::PathStrokeType (12.0f, juce::PathStrokeType::curved));
-            g.setColour (curveCol.withAlpha (0.16f));
-            g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
-            g.setColour (curveCol.withAlpha (0.90f));
-            g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
+            // ── Centre baseline ───────────────────────────────────────────
+            g.setColour (juce::Colour (0x20ffffff));
+            g.drawLine (scX + margin, midY, scX + margin + cW, midY, 0.5f);
 
-            // Time axis label — shows current decay time
+            // ── Labels ────────────────────────────────────────────────────
             g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
             g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
             const juce::String decayStr = frozen ? "FROZEN"
                                                  : juce::String (decayTime, 1) + "s RT60";
-            g.drawText (decayStr, (int)(scX + scW - 70.0f), (int) scY + 6, 62, 10,
+            g.drawText (decayStr, (int)(scX + scW - 72.0f), (int) scY + 6, 64, 10,
                         juce::Justification::right, false);
+
+            if (!frozen && dampingVal > 0.05f)
+            {
+                g.setColour (juce::Colour (0xffff6060).withAlpha (0.65f));
+                g.drawText ("HF", (int)(scX + 8.0f), (int)(botY - 22.0f), 20, 10,
+                            juce::Justification::left, false);
+            }
         }
 
         // Screen border

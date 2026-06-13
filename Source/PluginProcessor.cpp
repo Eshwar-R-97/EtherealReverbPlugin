@@ -23,10 +23,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout EtherealReverbProcessor::cre
         juce::ParameterID { ParamID::roomSize, 1 }, "Room Size",
         juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.5f));
 
-    // Skew factor 0.4 compresses the upper range — most useful decay times are <5s
+    // Skew 0.35 keeps short decays accessible; max 60s for extreme ambient tails
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { ParamID::decay, 1 }, "Decay",
-        juce::NormalisableRange<float> (0.1f, 20.0f, 0.01f, 0.4f), 2.0f));
+        juce::NormalisableRange<float> (0.1f, 60.0f, 0.01f, 0.35f), 2.0f));
 
     params.push_back (std::make_unique<juce::AudioParameterFloat> (
         juce::ParameterID { ParamID::damping, 1 }, "Damping",
