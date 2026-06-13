@@ -105,9 +105,11 @@ private:
     juce::ComboBox shimmerVoicesBox;
     juce::Label    shimmerVoicesLabel;
 
-    // ── Freeze / Reverse toggles ───────────────────────────────────────────
+    // ── Freeze / Reverse toggles + Reverse Mix knob ───────────────────────
     juce::ToggleButton freezeButton;
     juce::ToggleButton reverseButton;
+    juce::Slider       reverseMixKnob;
+    juce::Label        reverseMixLabel;
 
     // ── Preset dropdown ────────────────────────────────────────────────────
     juce::ComboBox presetBox;
@@ -126,6 +128,7 @@ private:
     std::unique_ptr<ComboBoxAttachment> shimmerVoicesAttach;
     std::unique_ptr<ButtonAttachment>   freezeAttach;
     std::unique_ptr<ButtonAttachment>   reverseAttach;
+    std::unique_ptr<SliderAttachment>   reverseMixAttach;
 
     // ── Psychedelic UI animation ───────────────────────────────────────────
     float psychedelicBlend { 0.0f };  // 0 = normal, 1 = full psychedelic

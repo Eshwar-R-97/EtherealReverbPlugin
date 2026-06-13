@@ -340,6 +340,10 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     reverseButton.setButtonText ("  REVERSE");
     addAndMakeVisible (reverseButton);
 
+    setupKnob (reverseMixKnob, reverseMixLabel, "REV AMT");
+    reverseMixKnob.setVisible (false);
+    reverseMixLabel.setVisible (false);
+
     for (int i = 0; i < (int) kPresets.size(); ++i)
         presetBox.addItem (kPresets[(size_t) i].name, i + 1);
     presetBox.setSelectedId (1, juce::dontSendNotification);
@@ -365,6 +369,7 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     shimmerVoicesAttach  = std::make_unique<ComboBoxAttachment> (apvts, ParamID::shimmerVoices,  shimmerVoicesBox);
     freezeAttach         = std::make_unique<ButtonAttachment>   (apvts, ParamID::freeze,         freezeButton);
     reverseAttach        = std::make_unique<ButtonAttachment>   (apvts, ParamID::reverse,        reverseButton);
+    reverseMixAttach     = std::make_unique<SliderAttachment>   (apvts, ParamID::reverseMix,     reverseMixKnob);
 
     startTimerHz (20);
 }
@@ -389,6 +394,13 @@ void EtherealReverbEditor::timerCallback()
     // Dynamic label for pre-delay knob
     preDelayLabel.setText (revActive ? "REV TIME" : "PRE-DELAY",
                            juce::dontSendNotification);
+
+    // Show REV AMT knob only when Reverse is active
+    const bool knobWasVisible = reverseMixKnob.isVisible();
+    reverseMixKnob.setVisible (revActive);
+    reverseMixLabel.setVisible (revActive);
+    if (revActive != knobWasVisible)
+        resized();
 
     repaint();
 }
@@ -507,6 +519,12 @@ void EtherealReverbEditor::resized()
     const int btnStartX = 400 - (btnW * 2 + btnGap) / 2;
     freezeButton.setBounds  (btnStartX,                btnY, btnW, btnH);
     reverseButton.setBounds (btnStartX + btnW + btnGap, btnY, btnW, btnH);
+
+    // REV AMT knob — appears to the right of Reverse button when active
+    constexpr int revKnobSz = 48;
+    const int revKnobCX = btnStartX + btnW + btnGap + btnW + btnGap + revKnobSz / 2;
+    reverseMixKnob.setBounds  (revKnobCX - revKnobSz / 2, btnY, revKnobSz, revKnobSz);
+    reverseMixLabel.setBounds (revKnobCX - 36,             btnY + revKnobSz + 2, 72, 14);
 }
 
 void EtherealReverbEditor::paint (juce::Graphics& g)
