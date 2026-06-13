@@ -555,9 +555,10 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 const float barH = amp * cH * 0.44f;
                 const float bx   = scX + margin + (float) px;
 
+                const float barAlpha = frozen ? 0.30f : amp * 0.45f;
                 const juce::Colour barCol = frozen
-                    ? juce::Colour (0xffffaa00).withAlpha (amp * 0.55f)
-                    : juce::Colour (0xff00b4ff).withAlpha (amp * 0.45f);
+                    ? juce::Colour (0xffffaa00).withAlpha (barAlpha)
+                    : juce::Colour (0xff00b4ff).withAlpha (barAlpha);
                 g.setColour (barCol);
                 g.drawLine (bx, midY, bx, midY - barH * n1, 1.0f);
                 g.drawLine (bx, midY, bx, midY + barH * n2, 1.0f);
@@ -585,15 +586,33 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                 g.strokePath (hfCurve, juce::PathStrokeType (1.0f, juce::PathStrokeType::curved));
             }
 
-            // ── Main LF envelope curve ─────────────────────────────────────
+            // ── Main LF envelope curve / frozen oscilloscope ─────────────
             {
                 juce::Path curve;
-                const juce::Colour curveCol = frozen ? juce::Colour (0xffffaa00)
-                                                     : juce::Colour (0xff00b4ff);
+
                 if (frozen)
                 {
-                    curve.startNewSubPath (scX + margin, topY);
-                    curve.lineTo (scX + margin + cW, topY);
+                    // Frozen = sustained signal at constant energy, never decaying.
+                    // Draw as a slow sine wave centred in the screen — looks like a
+                    // signal sustaining on an oscilloscope rather than a line at the top.
+                    const double now = juce::Time::getMillisecondCounterHiRes() * 0.001;
+                    const float  amp = cH * 0.38f;
+                    const int    pts = 300;
+                    for (int i = 0; i <= pts; ++i)
+                    {
+                        const float t  = (float) i / (float) pts;
+                        const float px = scX + margin + t * cW;
+                        const float py = midY + amp * std::sin ((double) t * 6.0 * juce::MathConstants<double>::pi
+                                                                 + now * 1.8);
+                        if (i == 0) curve.startNewSubPath (px, py);
+                        else        curve.lineTo (px, py);
+                    }
+                    g.setColour (juce::Colour (0xffffaa00).withAlpha (0.10f));
+                    g.strokePath (curve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
+                    g.setColour (juce::Colour (0xffffaa00).withAlpha (0.22f));
+                    g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
+                    g.setColour (juce::Colour (0xffffaa00).withAlpha (0.92f));
+                    g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
                 }
                 else
                 {
@@ -605,18 +624,18 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
                         const float amp   = envelope (tSecs);
                         const float px    = scX + margin + t * cW;
                         const float py    = botY - amp * cH;
-                        if (!started && amp < 0.001f && tSecs < preDelayMs * 0.001f)
+                        if (!started && tSecs < preDelayMs * 0.001f)
                             continue;
                         if (!started) { curve.startNewSubPath (px, botY); started = true; }
                         curve.lineTo (px, py);
                     }
+                    g.setColour (juce::Colour (0xff00b4ff).withAlpha (0.08f));
+                    g.strokePath (curve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
+                    g.setColour (juce::Colour (0xff00b4ff).withAlpha (0.18f));
+                    g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
+                    g.setColour (juce::Colour (0xff00b4ff).withAlpha (0.92f));
+                    g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
                 }
-                g.setColour (curveCol.withAlpha (0.08f));
-                g.strokePath (curve, juce::PathStrokeType (14.0f, juce::PathStrokeType::curved));
-                g.setColour (curveCol.withAlpha (0.18f));
-                g.strokePath (curve, juce::PathStrokeType (5.0f,  juce::PathStrokeType::curved));
-                g.setColour (curveCol.withAlpha (0.92f));
-                g.strokePath (curve, juce::PathStrokeType (1.6f,  juce::PathStrokeType::curved));
             }
 
             // ── Centre baseline ───────────────────────────────────────────
