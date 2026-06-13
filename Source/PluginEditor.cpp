@@ -4,17 +4,17 @@
 //  Preset table
 // ─────────────────────────────────────────────────────────────────────────────
 static const std::array<Preset, 10> kPresets = {{
-    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix   dColor  shimmer  shPitch shChar  shHz   frz
-    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f,  0.65f,  2.0f,  0.50f, 15.0f, false },
-    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f,  0.40f,  2.0f,  0.60f, 20.0f, true  },
-    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f,  0.00f,  2.0f,  0.30f, 15.0f, false },
-    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f,  0.30f,  1.5f,  0.20f, 10.0f, false },
+    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix   dColor  shimmer  shPitch shChar  shHz   shV  frz
+    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f,  0.65f,  2.0f,  0.50f, 15.0f, 4, false },
+    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f,  0.40f,  2.0f,  0.60f, 20.0f, 5, true  },
+    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
+    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f,  0.30f,  1.5f,  0.20f, 10.0f, 3, false },
 }};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -230,7 +230,7 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     setLookAndFeel (&laf);
-    setSize (800, 540);
+    setSize (800, 570);
 
     setupKnob (preDelayKnob,      preDelayLabel,      "PRE-DELAY");
     setupKnob (roomSizeKnob,      roomSizeLabel,      "ROOM SIZE");
@@ -246,6 +246,21 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     setupKnob (shimmerPitchKnob,  shimmerPitchLabel,  "PITCH");
     setupKnob (shimmerCharKnob,   shimmerCharLabel,   "CHARACTER");
     setupKnob (shimmerShiftHzKnob, shimmerShiftHzLabel, "SHIFT HZ");
+
+    shimmerVoicesBox.addItem ("1 Voice  — root only",               1);
+    shimmerVoicesBox.addItem ("2 Voices — + fifth",                 2);
+    shimmerVoicesBox.addItem ("3 Voices — + octave",                3);
+    shimmerVoicesBox.addItem ("4 Voices — + major 10th",            4);
+    shimmerVoicesBox.addItem ("5 Voices — full harmonic series",    5);
+    shimmerVoicesBox.setSelectedId (1, juce::dontSendNotification);
+    shimmerVoicesBox.setJustificationType (juce::Justification::centred);
+    addAndMakeVisible (shimmerVoicesBox);
+
+    shimmerVoicesLabel.setText ("VOICES", juce::dontSendNotification);
+    shimmerVoicesLabel.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f).withStyle ("Bold")));
+    shimmerVoicesLabel.setColour (juce::Label::textColourId, juce::Colour (EtherealLookAndFeel::kTextDim));
+    shimmerVoicesLabel.setJustificationType (juce::Justification::centred);
+    addAndMakeVisible (shimmerVoicesLabel);
 
     freezeButton.setButtonText ("  FREEZE");
     addAndMakeVisible (freezeButton);
@@ -271,8 +286,9 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     shimmerAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::shimmer,        shimmerKnob);
     shimmerPitchAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerPitch,   shimmerPitchKnob);
     shimmerCharAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerChar,    shimmerCharKnob);
-    shimmerShiftHzAttach = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerShiftHz, shimmerShiftHzKnob);
-    freezeAttach         = std::make_unique<ButtonAttachment> (apvts, ParamID::freeze,         freezeButton);
+    shimmerShiftHzAttach = std::make_unique<SliderAttachment>   (apvts, ParamID::shimmerShiftHz, shimmerShiftHzKnob);
+    shimmerVoicesAttach  = std::make_unique<ComboBoxAttachment> (apvts, ParamID::shimmerVoices,  shimmerVoicesBox);
+    freezeAttach         = std::make_unique<ButtonAttachment>   (apvts, ParamID::freeze,         freezeButton);
 
     startTimerHz (20);
 }
@@ -373,17 +389,24 @@ void EtherealReverbEditor::resized()
         }
     }
 
-    // Row 5 — ShimmerShiftHz (centred, knobSz=46)
+    // Row 5 — ShimmerShiftHz (centred, knobSz=44)
     {
-        constexpr int ky = 428, sz = 46;
+        constexpr int ky = 420, sz = 44;
         const int kcx = rPanelX + 207 / 2;
         shimmerShiftHzKnob.setBounds  (kcx - sz / 2, ky, sz, sz);
         shimmerShiftHzLabel.setBounds (rPanelX, ky + sz + 4, 207, 14);
     }
 
+    // Row 6 — Voices ComboBox (full-width, below shift knob)
+    {
+        constexpr int ky = 488;
+        shimmerVoicesBox.setBounds   (rPanelX + 6, ky,      195, 22);
+        shimmerVoicesLabel.setBounds (rPanelX,      ky - 13, 207, 11);
+    }
+
     // ── Freeze button — below the visualization screen ────────────────────
     constexpr int freezeW = 230, freezeH = 50;
-    freezeButton.setBounds (400 - freezeW / 2, 390, freezeW, freezeH);
+    freezeButton.setBounds (400 - freezeW / 2, 400, freezeW, freezeH);
 }
 
 void EtherealReverbEditor::paint (juce::Graphics& g)
@@ -445,11 +468,14 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     g.drawText ("TEXTURE",  588, 244, 207, 11, juce::Justification::centred, false);
     g.setColour (juce::Colour (0xff8040ff).withAlpha (0.55f));
     g.drawText ("SHIMMER",  588, 336, 207, 11, juce::Justification::centred, false);
+    g.setColour (juce::Colour (0xff8040ff).withAlpha (0.35f));
+    g.drawText ("VOICES",   588, 476, 207, 11, juce::Justification::centred, false);
 
     // Thin separator lines above section headers
     g.setColour (juce::Colour (0xff1a1a30));
     g.drawLine (594.0f, 242.0f, 789.0f, 242.0f, 0.75f);
     g.drawLine (594.0f, 334.0f, 789.0f, 334.0f, 0.75f);
+    g.drawLine (594.0f, 474.0f, 789.0f, 474.0f, 0.75f);
 
     // ── Header divider ────────────────────────────────────────────────────
     g.setColour (juce::Colour (EtherealLookAndFeel::kAccentDim));
@@ -812,6 +838,10 @@ void EtherealReverbEditor::applyPreset (int index)
     setFloat (ParamID::shimmerPitch,   p.shimmerPitch);
     setFloat (ParamID::shimmerChar,    p.shimmerChar);
     setFloat (ParamID::shimmerShiftHz, p.shimmerShiftHz);
+
+    // shimmerVoices is AudioParameterChoice: index 0-4, preset stores count 1-5
+    if (auto* param = apvts.getParameter (ParamID::shimmerVoices))
+        param->setValueNotifyingHost (param->convertTo0to1 ((float)(p.shimmerVoices - 1)));
 
     if (auto* param = apvts.getParameter (ParamID::freeze))
         param->setValueNotifyingHost (p.freeze ? 1.0f : 0.0f);

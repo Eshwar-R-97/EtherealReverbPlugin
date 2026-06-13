@@ -8,6 +8,7 @@ struct Preset
     float preDelay, roomSize, decay, damping, diffusion;
     float modRate, modDepth, tiltEQ, mix, decayColor;
     float shimmer, shimmerPitch, shimmerChar, shimmerShiftHz;
+    int   shimmerVoices;
     bool  freeze;
 };
 
@@ -85,6 +86,10 @@ private:
     juce::Label  decayColorLabel;
     juce::Label  shimmerLabel, shimmerPitchLabel, shimmerCharLabel, shimmerShiftHzLabel;
 
+    // ── Shimmer voices dropdown ───────────────────────────────────────────
+    juce::ComboBox shimmerVoicesBox;
+    juce::Label    shimmerVoicesLabel;
+
     // ── Freeze toggle ──────────────────────────────────────────────────────
     juce::ToggleButton freezeButton;
 
@@ -99,9 +104,11 @@ private:
     std::unique_ptr<SliderAttachment> dampingAttach,   diffusionAttach, tiltEQAttach;
     std::unique_ptr<SliderAttachment> modRateAttach,   modDepthAttach,  mixAttach;
     std::unique_ptr<SliderAttachment> decayColorAttach;
-    std::unique_ptr<SliderAttachment> shimmerAttach, shimmerPitchAttach,
-                                      shimmerCharAttach, shimmerShiftHzAttach;
-    std::unique_ptr<ButtonAttachment> freezeAttach;
+    std::unique_ptr<SliderAttachment>   shimmerAttach, shimmerPitchAttach,
+                                        shimmerCharAttach, shimmerShiftHzAttach;
+    using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+    std::unique_ptr<ComboBoxAttachment> shimmerVoicesAttach;
+    std::unique_ptr<ButtonAttachment>   freezeAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EtherealReverbEditor)
 };
