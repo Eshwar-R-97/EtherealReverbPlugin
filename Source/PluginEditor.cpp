@@ -3,18 +3,22 @@
 // ─────────────────────────────────────────────────────────────────────────────
 //  Preset table
 // ─────────────────────────────────────────────────────────────────────────────
-static const std::array<Preset, 10> kPresets = {{
-    //  name             preDly  rmSz   decay  damp   diff   mRate  mDep   tilt    mix   dColor  shimmer  shPitch shChar  shHz   shV  frz
-    { "Default",         0.0f,  0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Studio Room",    10.0f,  0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Cathedral",      30.0f,  0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Plate",           5.0f,  0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Dark Cave",      20.0f,  0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Shimmer Pad",    15.0f,  0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f,  0.65f,  2.0f,  0.50f, 15.0f, 4, false },
-    { "Broken Spring",   0.0f,  0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Frozen Void",    25.0f,  0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f,  0.40f,  2.0f,  0.60f, 20.0f, 5, true  },
-    { "Snare Punch",    20.0f,  0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false },
-    { "Deep Space",     40.0f,  1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f,  0.30f,  1.5f,  0.20f, 10.0f, 3, false },
+static const std::array<Preset, 14> kPresets = {{
+    //  name           preDly rmSz  decay damp  diff  mRate mDep  tilt   mix  dCol  shim  shPit shCh  shHz  shV frz rev rMix  dream swim mShp shDrf shDir glow cloud vox realm chaos
+    { "Default",        0.0f, 0.50f,  2.0f, 0.50f, 0.50f, 0.50f, 0.10f,  0.00f, 0.30f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Studio Room",   10.0f, 0.30f,  1.2f, 0.60f, 0.40f, 0.30f, 0.05f,  0.00f, 0.25f, -0.20f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Cathedral",     30.0f, 0.95f,  8.0f, 0.40f, 0.85f, 0.20f, 0.08f, -0.10f, 0.40f, -0.40f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plate",          5.0f, 0.50f,  2.5f, 0.20f, 0.90f, 0.40f, 0.10f,  0.10f, 0.35f,  0.30f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Dark Cave",     20.0f, 0.75f,  5.0f, 0.90f, 0.60f, 0.20f, 0.05f, -0.80f, 0.45f, -0.70f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Shimmer Pad",   15.0f, 0.80f,  6.0f, 0.30f, 0.80f, 1.00f, 0.30f,  0.70f, 0.50f,  0.60f,  0.65f,  2.0f,  0.50f, 15.0f, 4, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Broken Spring",  0.0f, 0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.40f,  0.00f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Frozen Void",   25.0f, 0.90f, 15.0f, 0.30f, 0.95f, 0.50f, 0.20f,  0.40f, 0.60f, -0.30f,  0.40f,  2.0f,  0.60f, 20.0f, 5, true,  false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Snare Punch",   20.0f, 0.25f,  0.4f, 0.50f, 0.30f, 0.30f, 0.05f,  0.00f, 0.20f,  0.10f,  0.00f,  2.0f,  0.30f, 15.0f, 1, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Deep Space",    40.0f, 1.00f, 18.0f, 0.50f, 0.95f, 0.15f, 0.15f, -0.20f, 0.55f, -0.50f,  0.30f,  1.5f,  0.20f, 10.0f, 3, false, false, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Fever Dream",   25.0f, 0.85f, 10.0f, 0.35f, 0.90f, 3.50f, 0.92f,  0.35f, 0.48f,  0.50f,  0.15f,  2.0f,  0.40f, 18.0f, 2, false, true,  0.40f, 0.65f, 0.70f, 0.35f, 0.25f,  1.0f, 0.25f, 0.15f, 0.0f, 0.35f, 0.10f },
+    { "Hypnagogic",    20.0f, 0.78f, 10.0f, 0.40f, 0.82f, 0.80f, 0.35f,  0.25f, 0.55f,  0.20f,  0.50f,  1.5f,  0.70f, 12.0f, 3, false, false, 0.50f, 0.45f, 0.30f, 0.20f, 0.40f,  1.0f, 0.10f, 0.35f, 0.20f, 0.30f, 0.05f },
+    { "Molten Spring",  0.0f, 0.40f,  1.5f, 0.50f, 0.20f, 6.00f, 0.80f,  0.20f, 0.42f,  0.10f,  0.25f,  2.0f,  0.45f, 20.0f, 2, false, true,  0.30f, 0.35f, 0.55f, 0.50f, 0.15f,  1.0f, 0.40f, 0.10f, 0.0f, 0.15f, 0.08f },
+    { "Descending Void",30.0f,0.92f, 12.0f, 0.55f, 0.88f, 0.35f, 0.25f, -0.45f, 0.58f, -0.80f,  0.45f,  0.75f, 0.80f, 25.0f, 4, false, false, 0.60f, 0.50f, 0.20f, 0.15f, 0.30f, -1.0f, 0.30f, 0.20f, 0.35f, 0.45f, 0.12f },
 }};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -291,7 +295,7 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     setLookAndFeel (&laf);
-    setSize (800, 570);
+    setSize (800, 660);
 
     setupKnob (preDelayKnob,      preDelayLabel,      "PRE-DELAY");
     setupKnob (roomSizeKnob,      roomSizeLabel,      "ROOM SIZE");
@@ -303,10 +307,20 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     setupKnob (modDepthKnob,      modDepthLabel,      "MOD DEPTH");
     setupKnob (mixKnob,           mixLabel,           "MIX");
     setupKnob (decayColorKnob,    decayColorLabel,    "DECAY COLOR");
+    setupKnob (dreamKnob,         dreamLabel,         "DREAM");
+    setupKnob (swimKnob,          swimLabel,          "SWIM");
+    setupKnob (modShapeKnob,      modShapeLabel,      "MOD SHAPE");
     setupKnob (shimmerKnob,       shimmerLabel,       "SHIMMER");
     setupKnob (shimmerPitchKnob,  shimmerPitchLabel,  "PITCH");
     setupKnob (shimmerCharKnob,   shimmerCharLabel,   "CHARACTER");
     setupKnob (shimmerShiftHzKnob, shimmerShiftHzLabel, "SHIFT HZ");
+    setupKnob (shimmerDriftKnob,  shimmerDriftLabel,  "DRIFT");
+    setupKnob (shimmerDirKnob,    shimmerDirLabel,    "DIR");
+    setupKnob (glowKnob,          glowLabel,          "GLOW");
+    setupKnob (cloudKnob,         cloudLabel,         "CLOUD");
+    setupKnob (voxKnob,           voxLabel,           "VOX");
+    setupKnob (realmKnob,         realmLabel,         "REALM");
+    setupKnob (chaosKnob,         chaosLabel,         "CHAOS");
 
     shimmerExpandBtn.setButtonText ("SHIMMER  \xe2\x96\xbc");
     shimmerExpandBtn.onClick = [this]
@@ -362,6 +376,9 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     modDepthAttach       = std::make_unique<SliderAttachment> (apvts, ParamID::modDepth,       modDepthKnob);
     mixAttach            = std::make_unique<SliderAttachment> (apvts, ParamID::mix,            mixKnob);
     decayColorAttach     = std::make_unique<SliderAttachment> (apvts, ParamID::decayColor,     decayColorKnob);
+    dreamAttach          = std::make_unique<SliderAttachment> (apvts, ParamID::dream,          dreamKnob);
+    swimAttach           = std::make_unique<SliderAttachment> (apvts, ParamID::swim,           swimKnob);
+    modShapeAttach       = std::make_unique<SliderAttachment> (apvts, ParamID::modShape,       modShapeKnob);
     shimmerAttach        = std::make_unique<SliderAttachment> (apvts, ParamID::shimmer,        shimmerKnob);
     shimmerPitchAttach   = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerPitch,   shimmerPitchKnob);
     shimmerCharAttach    = std::make_unique<SliderAttachment> (apvts, ParamID::shimmerChar,    shimmerCharKnob);
@@ -370,6 +387,13 @@ EtherealReverbEditor::EtherealReverbEditor (EtherealReverbProcessor& p)
     freezeAttach         = std::make_unique<ButtonAttachment>   (apvts, ParamID::freeze,         freezeButton);
     reverseAttach        = std::make_unique<ButtonAttachment>   (apvts, ParamID::reverse,        reverseButton);
     reverseMixAttach     = std::make_unique<SliderAttachment>   (apvts, ParamID::reverseMix,     reverseMixKnob);
+    shimmerDriftAttach   = std::make_unique<SliderAttachment>   (apvts, ParamID::shimmerDrift,   shimmerDriftKnob);
+    shimmerDirAttach     = std::make_unique<SliderAttachment>   (apvts, ParamID::shimmerDir,     shimmerDirKnob);
+    glowAttach           = std::make_unique<SliderAttachment>   (apvts, ParamID::glow,           glowKnob);
+    cloudAttach          = std::make_unique<SliderAttachment>   (apvts, ParamID::cloud,          cloudKnob);
+    voxAttach            = std::make_unique<SliderAttachment>   (apvts, ParamID::vox,            voxKnob);
+    realmAttach          = std::make_unique<SliderAttachment>   (apvts, ParamID::realm,          realmKnob);
+    chaosAttach          = std::make_unique<SliderAttachment>   (apvts, ParamID::chaos,          chaosKnob);
 
     startTimerHz (20);
 }
@@ -452,14 +476,14 @@ void EtherealReverbEditor::resized()
     constexpr int motionX  = 416;
     constexpr int motionW  = 376;
     constexpr int motionY  = 163;
-    constexpr int mKnobSz  = 54;
-    constexpr int mColW    = motionW / 3;   // ~125px
+    constexpr int mKnobSz  = 50;
+    constexpr int mColW    = motionW / 4;
 
-    // Row 1 — ModRate, ModDepth, Mix
+    // Row 1 — ModRate, ModDepth, Mix, Dream
     {
-        juce::Slider* knobs[]  = { &modRateKnob,  &modDepthKnob, &mixKnob  };
-        juce::Label*  labels[] = { &modRateLabel, &modDepthLabel, &mixLabel };
-        for (int col = 0; col < 3; ++col)
+        juce::Slider* knobs[]  = { &modRateKnob, &modDepthKnob, &mixKnob, &dreamKnob };
+        juce::Label*  labels[] = { &modRateLabel, &modDepthLabel, &mixLabel, &dreamLabel };
+        for (int col = 0; col < 4; ++col)
         {
             const int cx = motionX + mColW * col + mColW / 2;
             knobs[col]->setBounds  (cx - mKnobSz / 2, motionY, mKnobSz, mKnobSz);
@@ -467,31 +491,36 @@ void EtherealReverbEditor::resized()
         }
     }
 
-    // Row 2 — DecayColor (centred in motion panel)
+    // Row 2 — DecayColor, Swim, ModShape, Realm
     {
-        constexpr int ky = motionY + mKnobSz + 24, sz = 50;
-        const int cx = motionX + motionW / 2;
-        decayColorKnob.setBounds  (cx - sz / 2, ky, sz, sz);
-        decayColorLabel.setBounds (motionX, ky + sz + 3, motionW, 13);
+        constexpr int ky = motionY + mKnobSz + 22;
+        juce::Slider* knobs[]  = { &decayColorKnob, &swimKnob, &modShapeKnob, &realmKnob };
+        juce::Label*  labels[] = { &decayColorLabel, &swimLabel, &modShapeLabel, &realmLabel };
+        for (int col = 0; col < 4; ++col)
+        {
+            const int cx = motionX + mColW * col + mColW / 2;
+            knobs[col]->setBounds  (cx - mKnobSz / 2, ky, mKnobSz, mKnobSz);
+            labels[col]->setBounds (motionX + mColW * col, ky + mKnobSz + 3, mColW, 13);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    //  SHIMMER section header + controls  (y=382+)
+    //  SHIMMER section header + controls  (y=400+)
     // ─────────────────────────────────────────────────────────────────────
-    constexpr int shimHeaderY = 382;
+    constexpr int shimHeaderY = 400;
     shimmerExpandBtn.setBounds (0, shimHeaderY, 800, 20);
 
     {
         const bool show       = shimmerExpanded;
         constexpr int ky      = shimHeaderY + 26;
-        constexpr int sz      = 48;
-        constexpr int shimColW = 800 / 5;   // 160px per column (4 knobs + voices)
+        constexpr int sz      = 44;
+        constexpr int shimColW = 800 / 6;
 
-        juce::Slider* knobs[]  = { &shimmerKnob, &shimmerPitchKnob,
-                                    &shimmerCharKnob, &shimmerShiftHzKnob };
-        juce::Label*  labels[] = { &shimmerLabel, &shimmerPitchLabel,
-                                    &shimmerCharLabel, &shimmerShiftHzLabel };
-        for (int i = 0; i < 4; ++i)
+        juce::Slider* knobs[]  = { &shimmerKnob, &shimmerPitchKnob, &shimmerCharKnob,
+                                    &shimmerShiftHzKnob, &shimmerDriftKnob, &shimmerDirKnob };
+        juce::Label*  labels[] = { &shimmerLabel, &shimmerPitchLabel, &shimmerCharLabel,
+                                    &shimmerShiftHzLabel, &shimmerDriftLabel, &shimmerDirLabel };
+        for (int i = 0; i < 6; ++i)
         {
             knobs[i]->setVisible (show);
             labels[i]->setVisible (show);
@@ -503,19 +532,35 @@ void EtherealReverbEditor::resized()
             }
         }
 
+        // Dream FX row: Glow, Cloud, Vox, Chaos + Voices
+        constexpr int ky2 = ky + sz + 22;
+        juce::Slider* fxKnobs[]  = { &glowKnob, &cloudKnob, &voxKnob, &chaosKnob };
+        juce::Label*  fxLabels[] = { &glowLabel, &cloudLabel, &voxLabel, &chaosLabel };
+        for (int i = 0; i < 4; ++i)
+        {
+            fxKnobs[i]->setVisible (show);
+            fxLabels[i]->setVisible (show);
+            if (show)
+            {
+                const int cx = shimColW * i + shimColW / 2;
+                fxKnobs[i]->setBounds  (cx - sz / 2, ky2, sz, sz);
+                fxLabels[i]->setBounds (shimColW * i, ky2 + sz + 3, shimColW, 13);
+            }
+        }
+
         shimmerVoicesBox.setVisible (show);
         shimmerVoicesLabel.setVisible (show);
         if (show)
         {
-            const int col4cx = shimColW * 4 + shimColW / 2;
-            shimmerVoicesLabel.setBounds (shimColW * 4, ky, shimColW, 13);
-            shimmerVoicesBox.setBounds   (col4cx - 72, ky + 17, 144, 22);
+            const int col5cx = shimColW * 4 + shimColW / 2;
+            shimmerVoicesLabel.setBounds (shimColW * 4, ky2, shimColW, 13);
+            shimmerVoicesBox.setBounds   (col5cx - 72, ky2 + 17, 144, 22);
         }
     }
 
     // ── Freeze + Reverse buttons ──────────────────────────────────────────
     constexpr int btnW = 175, btnH = 46, btnGap = 8;
-    const int btnY      = shimmerExpanded ? 476 : 412;
+    const int btnY      = shimmerExpanded ? 556 : 432;
     const int btnStartX = 400 - (btnW * 2 + btnGap) / 2;
     freezeButton.setBounds  (btnStartX,                btnY, btnW, btnH);
     reverseButton.setBounds (btnStartX + btnW + btnGap, btnY, btnW, btnH);
@@ -1030,7 +1075,7 @@ void EtherealReverbEditor::paint (juce::Graphics& g)
     // ── Version footer ────────────────────────────────────────────────────
     g.setFont (juce::Font (juce::FontOptions{}.withHeight (9.0f)));
     g.setColour (juce::Colour (EtherealLookAndFeel::kTextDim));
-    g.drawText ("v1.1.0", 0, H - 16, W - 10, 14, juce::Justification::right, false);
+    g.drawText ("v1.2.0", 0, H - 16, W - 10, 14, juce::Justification::right, false);
 }
 
 void EtherealReverbEditor::applyPreset (int index)
@@ -1068,4 +1113,19 @@ void EtherealReverbEditor::applyPreset (int index)
 
     if (auto* param = apvts.getParameter (ParamID::freeze))
         param->setValueNotifyingHost (p.freeze ? 1.0f : 0.0f);
+
+    if (auto* param = apvts.getParameter (ParamID::reverse))
+        param->setValueNotifyingHost (p.reverse ? 1.0f : 0.0f);
+
+    setFloat (ParamID::reverseMix,     p.reverseMix);
+    setFloat (ParamID::dream,          p.dream);
+    setFloat (ParamID::swim,           p.swim);
+    setFloat (ParamID::modShape,       p.modShape);
+    setFloat (ParamID::shimmerDrift,   p.shimmerDrift);
+    setFloat (ParamID::shimmerDir,     p.shimmerDir);
+    setFloat (ParamID::glow,           p.glow);
+    setFloat (ParamID::cloud,          p.cloud);
+    setFloat (ParamID::vox,            p.vox);
+    setFloat (ParamID::realm,          p.realm);
+    setFloat (ParamID::chaos,          p.chaos);
 }

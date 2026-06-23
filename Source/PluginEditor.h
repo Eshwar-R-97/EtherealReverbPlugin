@@ -10,6 +10,10 @@ struct Preset
     float shimmer, shimmerPitch, shimmerChar, shimmerShiftHz;
     int   shimmerVoices;
     bool  freeze;
+    bool  reverse;
+    float reverseMix;
+    float dream, swim, modShape, shimmerDrift, shimmerDir;
+    float glow, cloud, vox, realm, chaos;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,15 +91,19 @@ private:
     juce::Slider preDelayKnob,   roomSizeKnob,  decayKnob;
     juce::Slider dampingKnob,    diffusionKnob, tiltEQKnob;
     juce::Slider modRateKnob,    modDepthKnob,  mixKnob;
-    juce::Slider decayColorKnob;
+    juce::Slider decayColorKnob, dreamKnob,     swimKnob, modShapeKnob;
     juce::Slider shimmerKnob, shimmerPitchKnob, shimmerCharKnob, shimmerShiftHzKnob;
+    juce::Slider shimmerDriftKnob, shimmerDirKnob;
+    juce::Slider glowKnob, cloudKnob, voxKnob, realmKnob, chaosKnob;
 
     // ── Knob labels ────────────────────────────────────────────────────────
     juce::Label  preDelayLabel,   roomSizeLabel,  decayLabel;
     juce::Label  dampingLabel,    diffusionLabel, tiltEQLabel;
     juce::Label  modRateLabel,    modDepthLabel,  mixLabel;
-    juce::Label  decayColorLabel;
+    juce::Label  decayColorLabel, dreamLabel,     swimLabel, modShapeLabel;
     juce::Label  shimmerLabel, shimmerPitchLabel, shimmerCharLabel, shimmerShiftHzLabel;
+    juce::Label  shimmerDriftLabel, shimmerDirLabel;
+    juce::Label  glowLabel, cloudLabel, voxLabel, realmLabel, chaosLabel;
 
     // ── Shimmer expand toggle ─────────────────────────────────────────────
     juce::TextButton   shimmerExpandBtn;
@@ -121,9 +129,11 @@ private:
     std::unique_ptr<SliderAttachment> preDelayAttach,  roomSizeAttach, decayAttach;
     std::unique_ptr<SliderAttachment> dampingAttach,   diffusionAttach, tiltEQAttach;
     std::unique_ptr<SliderAttachment> modRateAttach,   modDepthAttach,  mixAttach;
-    std::unique_ptr<SliderAttachment> decayColorAttach;
+    std::unique_ptr<SliderAttachment> decayColorAttach, dreamAttach, swimAttach, modShapeAttach;
     std::unique_ptr<SliderAttachment>   shimmerAttach, shimmerPitchAttach,
                                         shimmerCharAttach, shimmerShiftHzAttach;
+    std::unique_ptr<SliderAttachment> shimmerDriftAttach, shimmerDirAttach;
+    std::unique_ptr<SliderAttachment> glowAttach, cloudAttach, voxAttach, realmAttach, chaosAttach;
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
     std::unique_ptr<ComboBoxAttachment> shimmerVoicesAttach;
     std::unique_ptr<ButtonAttachment>   freezeAttach;
