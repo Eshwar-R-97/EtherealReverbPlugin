@@ -14,7 +14,7 @@ After copying, rescan plugins in your DAW. Logic Pro detects AU automatically af
 
 ## Signal flow in one line
 
-Dry signal → Pre-delay → FDN reverb → Diffusion → Tilt EQ → Bloom → Mix
+Dry signal → Pre-delay → FDN reverb → Dual Realm → Diffusion → Melt (Swim) → Cloud → Vox → Tilt EQ → Bloom → Mix
 
 ---
 
@@ -36,9 +36,13 @@ Dry signal → Pre-delay → FDN reverb → Diffusion → Tilt EQ → Bloom → 
 | Knob | What it does | Sweet spots |
 |------|-------------|-------------|
 | **Mod Rate** | LFO speed modulating each FDN tap's delay time (0.1–8 Hz). | 0.2–0.6 Hz for natural chorus; 2–5 Hz for dramatic wobble |
-| **Mod Depth** | How far the LFO displaces the read head (0–1 = 0–0.5 ms max). | 0.05–0.2 for subtle width; 0.5+ for deliberate warbling |
+| **Mod Depth** | How far the LFO displaces the read head (0–1, up to ~4 ms at 48 kHz). Swim adds extra depth. | 0.05–0.2 for subtle width; 0.5+ for deliberate warbling; 0.9+ for fever-dream swim |
 | **Mix** | Dry/wet balance. 0 = fully dry, 1 = fully wet. | 0.25–0.45 for most tracks; 1.0 for send/return |
+| **Dream** | Macro morph toward psychedelic targets (mod, shimmer, brightness, swim, glow, cloud, realm). | 0.3–0.6 for subtle dreaminess; 0.8+ for full fever-dream character |
 | **Decay Color** | Shapes which frequencies decay fastest. −1 = only bass survives; 0 = neutral; +1 = highs sustain as long as lows. | −0.3 for warm vintage; +0.4 for shimmery brightness |
+| **Swim** | Post-FDN chorus swim + mod depth boost. | 0.3–0.6 for psychedelic motion; combine with high Mod Depth |
+| **Mod Shape** | LFO waveform: 0 = sine, 0.5 = triangle, 1 = smoothed random. | 0.3–0.7 for seasick tails |
+| **Realm** | LF/HF breathing crossover — room size seems to pulse. | 0.3–0.6 for hypnagogic pads |
 
 ### SHIMMER strip (bottom collapsible)
 
@@ -54,6 +58,12 @@ Click **SHIMMER ▼** to expand/collapse. All knobs here affect the harmonic pit
 | **FREEZE** | Locks the FDN at unity feedback — signal recirculates forever. New input still blurs in. | Hold a pad, freeze it, play over the sustained cloud |
 | **REVERSE** | Enables parallel reverse reverb. The reversed signal is injected additively into the FDN alongside the normal tail. When active: Pre-Delay is relabelled **REV TIME** and a **REV AMT** knob appears. | Enable on percussive elements for backwards swells |
 | **REV AMT** *(appears when REVERSE is on)* | Controls how strongly the reversed signal feeds into the FDN (0–1). | 0.5–0.75 for subtle blend; 1.0 for dominant reverse swell |
+| **Drift** | Pitch wobble intensity on shimmer voices (±0.5% to ±8%). | 0.3–0.7 for unstable, dreamlike harmonics |
+| **Dir** | Shimmer direction: −1 = descending harmonics, +1 = ascending. | −1 for heavy narcotic tails; +1 for classic octave-up shimmer |
+| **Glow** | Warm saturation in the FDN feedback path. | 0.2–0.5 for hazy tape-like buildup |
+| **Cloud** | Parallel granular scatter on the wet tail. | 0.2–0.4 for melting-wall texture |
+| **Vox** | Formant vowel morph on the tail. | 0.2–0.5 for distant humming / vocal hallucination |
+| **Chaos** | Rare instability events (mod spikes, micro-freeze). | 0.05–0.15 for subtle; higher for unpredictable fever breaks |
 
 ---
 
@@ -61,14 +71,20 @@ Click **SHIMMER ▼** to expand/collapse. All knobs here affect the harmonic pit
 
 | Preset | Character |
 |--------|-----------|
-| Default | Neutral starting point, all knobs near center |
-| Cathedral | Large bright decay, high diffusion, slow mod |
+| Default | Neutral starting point |
+| Studio Room | Tight, natural room |
+| Cathedral | Large bright decay, high diffusion |
+| Plate | Bright, dense plate |
+| Dark Cave | Heavy damping, dark decay color |
 | Shimmer Pad | Octave shimmer, long decay, high mix |
-| Dark Room | Heavy damping, negative decay color, short decay |
-| Psychedelic | Reverse enabled, high shimmer, SSB character |
-| Vocal Plate | Short pre-delay, medium decay, darker tilt |
-| Infinite Drone | Freeze enabled, long decay, 5 shimmer voices |
-| Subtle | Low mix, short decay, minimal diffusion |
+| Broken Spring | High mod rate/depth spring tank wobble |
+| Frozen Void | Freeze on, long decay, 5 shimmer voices |
+| Snare Punch | Short decay, small room |
+| Deep Space | Maximum room size, long decay, fifth shimmer |
+| **Fever Dream** | Max swim, reverse swell, Dream-zone modulation |
+| **Hypnagogic** | Soft shimmer cloud, SSB character, cloud/vox |
+| **Molten Spring** | Broken spring + shimmer + reverse + glow |
+| **Descending Void** | Dark, downward shimmer (Dir = −1), heavy realm |
 
 ---
 
@@ -79,6 +95,9 @@ Set Mix to 1.0. Route a send from your track to the reverb, and control the wet 
 
 **Making reverse reverb audible**  
 Turn Pre-Delay (REV TIME) to 80–120 ms, Rev Amt to 0.75, Decay to 4–8 s, and Mix to 0.4. The swell will bloom in the first 80–120 ms before each transient. Best on sustained notes, not fast rhythmic material.
+
+**Fever-dream quick recipe**  
+Load **Fever Dream** preset, or set Dream to 0.7+, Swim to 0.5+, Mod Depth to 0.8+, enable Reverse with Rev Amt 0.4–0.6. Add Cloud 0.25 and Realm 0.35 for breathing hypnagogic space.
 
 **Hearing shimmer clearly**  
 Shimmer feeds back inside the reverb — it gets louder with longer decays. Set Decay > 5 s, Shimmer > 0.4, and Pitch to 2.0 (octave). Add Voices 3–5 for a full harmonic cloud.

@@ -1,7 +1,7 @@
 # Ethereal Reverb — Technical Reference
 
 Author: Eshwar Rajasekar  
-Version: 1.1.0  
+Version: 1.2.0  
 Formats: VST3 · AU · Standalone  
 Framework: JUCE 8.0.7
 
@@ -22,12 +22,26 @@ Input
 [Pre-delay]         — fixed delay, 0–150ms
   │
   ▼
-[FDN × 8]           — 8 delay lines, Householder cross-coupling
+[FDN × 8]           — 8 delay lines, Householder cross-coupling, per-tap LFO, glow saturation
   │     ▲
-  │     └── [Shimmer feedback] ─ [Granular pitch shift × N voices]
+  │     └── [Shimmer feedback] ─ [Granular pitch shift × N voices, drift + direction]
   │                            └─ [SSB frequency shift]
+  │     ▲
+  │     └── [Reverse ping-pong] — crossfaded, pitch-smeared chunks
+  ▼
+[Dual Realm]        — optional LF/HF split with breathing crossfade (realm)
+  │
   ▼
 [All-pass chain]    — 6 stages per channel (12 total)
+  │
+  ▼
+[Melt chorus]       — modulated delay swim on wet path (swim)
+  │
+  ▼
+[Cloud scatter]     — parallel granular texture (cloud)
+  │
+  ▼
+[Vox formant]       — vowel morph peaking filters (vox)
   │
   ▼
 [Tilt EQ]           — 1-pole shelf, brightens or darkens the tail
@@ -133,16 +147,20 @@ fbSig += 0.10 × (v[i] − fdnDampState[i])
 
 `v[i] − fdnDampState[i]` approximates the high-frequency content (what the damping LP removed). Adding 10% of it back gives the tail a gentle "air" quality — the reverb gets slightly brighter as it decays, which is unnatural but sounds ethereal. The effect is cumulative over many feedback cycles, reaching approximately +0.8 dB at the damping crossover frequency.
 
-### LFO modulation
+### LFO modulation (v1.2)
 
-Each FDN tap has an independent LFO that modulates its read position (fractional delay):
+Each FDN tap has an independent LFO with **per-tap rate scaling** for beating moiré patterns:
 
 ```
-delay[i] = baseDelay[i] + sin(lfoPhase[i] × 2π) × modDepthSamples
-lfoPhase[i] += modRate / sampleRate
+tapRate[i] = modRate × (0.7 + 0.6 × i / (N−1))
+delay[i]   = baseDelay[i] + lfoShape(phase[i]) × modDepthSamples × swimBoost
 ```
 
-`modDepthSamples = modDepth × 24` (max ~0.5 ms at 48 kHz). The LFOs are initialized at evenly spaced phases `(i/N)` so they never all align — this prevents periodic amplitude modulation and creates a smooth, chorusing width to the tail.
+`modDepthSamples = modDepth × sampleRate × 0.004` (max ~4 ms at 48 kHz, up from 0.5 ms in v1.1). The **Swim** knob adds up to 60% extra depth.
+
+**Mod Shape** (0–1) morphs the LFO waveform: sine → triangle → smoothed random (80 ms sample-and-hold with slew). Triangle and random shapes produce a more seasick, fever-dream swim than sine alone.
+
+The LFOs are initialized at evenly spaced phases `(i/N)` so they never all align.
 
 ### Freeze mode
 
@@ -153,6 +171,32 @@ fb = freeze ? v[i] : fbSig × fdnG[i]
 ```
 
 Signal circulates at unity gain, sustaining indefinitely. The input still feeds in, so new notes continue to blur into the sustained tail.
+
+### Glow (v1.2)
+
+Soft saturation in the FDN feedback path before the decay gain:
+
+```
+fbSig = tanh(fbSig × (1 + glow × 0.85)) / (1 + glow × 0.85)
+```
+
+Builds warm harmonic haze over many feedback cycles without runaway gain.
+
+### Chaos (v1.2)
+
+Rare instability events gated by input energy: brief mod-depth spikes and micro-freeze (50–200 ms unity feedback). Controlled by the Chaos knob (event rate and intensity). Not intended for glitch-hop — subtle hypnagogic wobble at low settings.
+
+---
+
+## Stage 2b — Dual Realm (v1.2)
+
+After FDN output, the wet signal is split at ~400 Hz:
+
+- **LF path**: boosted bass body (+8%)
+- **HF path**: boosted air (+12%)
+- A slow LFO (0.06 Hz) crossfades emphasis between LF and HF, controlled by **Realm**
+
+Creates the sensation of the room breathing and changing size.
 
 ---
 
@@ -246,6 +290,10 @@ Each voice has an independent slow LFO (±0.5% depth) that gently wobbles the pi
 | 4 | 0.13 Hz |
 | 5 | 0.09 Hz |
 
+**4. Shimmer Drift (v1.2)** — scales pitch wobble from ±0.5% (at 0) to ±8% (at full) via the **Shimmer Drift** knob.
+
+**5. Shimmer Direction (v1.2)** — **Shimmer Dir** (−1 to +1) crossfades ascending harmonic ratios with descending (inverted) ratios for heavy, narcotic downward tails.
+
 ### SSB frequency shifter (Character knob)
 
 The `shimmerChar` knob blends in a single-sideband (SSB) frequency shifter alongside the granular voices. Unlike granular pitch shifting (which maintains harmonic intervals), SSB shifts all frequencies up by a fixed Hz amount — creating inharmonic beating and drift.
@@ -280,6 +328,30 @@ write: in + g × delayed
 ```
 
 Where `g = diffusion × 0.7` (Schroeder's canonical coefficient, scaled by the Diffusion knob). The all-pass has flat magnitude response but adds complex phase — increasing echo density without tonal coloration. 6 stages in series creates a much denser, smoother wash than the original 2 stages.
+
+---
+
+## Stage 4b — Melt chorus (v1.2)
+
+Post-all-pass, pre-tilt: modulated delay lines (~8–26 ms) with irrational LFO rates (0.47 Hz / 0.71 Hz L/R). Controlled by **Swim**. Adds classic psychedelic wet swimming without touching FDN feedback stability.
+
+---
+
+## Stage 4c — Cloud scatter (v1.2)
+
+Parallel granular engine on the wet path (not in the feedback loop). Pitch wanders 0.92–1.08× via slow LFO. Mix: `cloud × 0.28`. Melting-wall texture.
+
+---
+
+## Stage 4d — Vox formant morph (v1.2)
+
+Three peaking biquads (500 / 1200 / 2800 Hz) with gains modulated by **Vox** and a slow vowel morph LFO. Tails take on humming, speech-like resonance.
+
+---
+
+## Dream macro (v1.2)
+
+The **Dream** knob (0–1) morphs effective parameters at process time toward fever-dream targets: higher mod depth, shimmer, reverse mix, brightness, swim, glow, cloud, realm, and shimmer drift — without overwriting stored knob values in the DAW.
 
 ---
 
@@ -359,7 +431,7 @@ When write side reaches revBufLen samples:
     swap write/read sides
     revWritePos = 0; revReadPos = 0; revBufReady = true
 
-Read side outputs: out[n] = readBuf[revReadPos++]  (advances until next swap)
+Read side outputs interpolated samples with optional **pitch smear** (0.97–1.03× playback speed). At chunk boundaries a **35 ms crossfade** blends the new reversed chunk with the tail of the previous chunk to soften rhythmic seams.
 ```
 
 The reversed signal is injected **additively** into the FDN input in parallel with the normal signal:
@@ -402,6 +474,8 @@ Both forward and reverse tails play simultaneously. The reverse path contributes
 
 **Reverse as additive not replacement**: Blending the reversed signal in parallel (rather than replacing the normal signal) lets both forward decay and backward swell coexist. This is the psychedelic use case — the note blooms from silence, sustains, then trails off, all at once.
 
-**Ping-pong over circular read**: A circular reverse buffer would require reading backwards from the write head, but the write head moves forward at sample rate while the read position must advance at sample rate too. Ping-pong avoids this contradiction: one buffer is a fixed snapshot that is read front-to-back (after reversal), while the other fills continuously. The audible artifact is a periodic "seam" every `revBufLen` samples as the buffers swap — at 100ms buffer length this is inaudible at normal listening levels.
+**Ping-pong over circular read**: A circular reverse buffer would require reading backwards from the write head, but the write head moves forward at sample rate while the read position must advance at sample rate too. Ping-pong avoids this contradiction: one buffer is a fixed snapshot that is read front-to-back (after reversal), while the other fills continuously. v1.2 adds crossfade and pitch smear to further blur the swap seam.
+
+**Fever-dream DSP suite (v1.2)**: Deeper modulation, dual-realm breathing, melt chorus, cloud scatter, formant morph, glow saturation, chaos events, shimmer drift/direction, and the Dream macro — all designed to push the existing FDN+shimmer skeleton toward hypnagogic, disorienting tails without replacing the core architecture.
 
 **UI hardware redesign**: The plugin uses horizontal strip panels (SPACE, CENTER/MOTION, SHIMMER) to match the visual language of hardware units. Each strip has a subtle raised-panel edge highlight and corner rivets. In psychedelic (Reverse active) mode the background shifts from near-black-navy to a crimson→forest-green top-to-bottom gradient, each strip sampling that gradient at its y-position so the SPACE strip is red-tinted and the SHIMMER strip is green-tinted. Pulsing concentric rings animate outward from center. The transition animates over ~625ms via a `psychedelicBlend` float driven by a 20Hz timer.
