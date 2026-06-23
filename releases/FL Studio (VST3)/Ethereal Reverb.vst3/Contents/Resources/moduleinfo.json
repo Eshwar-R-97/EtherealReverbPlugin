@@ -1,6 +1,6 @@
 {
   "Name": "Ethereal Reverb",
-  "Version": "0.1.0",
+  "Version": "1.2.0",
   "Factory Info": {
     "Vendor": "EshwarRajasekar",
     "URL": "",
@@ -17,7 +17,7 @@
       "Category": "Audio Module Class",
       "Name": "Ethereal Reverb",
       "Vendor": "EshwarRajasekar",
-      "Version": "0.1.0",
+      "Version": "1.2.0",
       "SDKVersion": "VST 3.7.12",
       "Sub Categories": [
         "Fx",
@@ -34,7 +34,7 @@
       "Category": "Component Controller Class",
       "Name": "Ethereal Reverb",
       "Vendor": "EshwarRajasekar",
-      "Version": "0.1.0",
+      "Version": "1.2.0",
       "SDKVersion": "VST 3.7.12",
       "Sub Categories": [
         "Fx",
@@ -51,7 +51,7 @@
       "Category": "Plugin Compatibility Class",
       "Name": "Ethereal Reverb",
       "Vendor": "EshwarRajasekar",
-      "Version": "0.1.0",
+      "Version": "1.2.0",
       "SDKVersion": "VST 3.7.12",
       "Class Flags": 0,
       "Cardinality": 2147483647,
