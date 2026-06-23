@@ -86,6 +86,46 @@ juce::AudioProcessorValueTreeState::ParameterLayout EtherealReverbProcessor::cre
         juce::ParameterID { ParamID::reverseMix, 1 }, "Reverse Mix",
         juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.75f));
 
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::dream, 1 }, "Dream",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::swim, 1 }, "Swim",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::modShape, 1 }, "Mod Shape",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::shimmerDrift, 1 }, "Shimmer Drift",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::shimmerDir, 1 }, "Shimmer Dir",
+        juce::NormalisableRange<float> (-1.0f, 1.0f, 0.01f), 1.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::glow, 1 }, "Glow",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::cloud, 1 }, "Cloud",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::vox, 1 }, "Vox",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::realm, 1 }, "Realm",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
+    params.push_back (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID { ParamID::chaos, 1 }, "Chaos",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f), 0.0f));
+
     return { params.begin(), params.end() };
 }
 
@@ -140,6 +180,30 @@ void EtherealReverbProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     params.freeze         = apvts.getRawParameterValue (ParamID::freeze)->load() > 0.5f;
     params.reverse        = apvts.getRawParameterValue (ParamID::reverse)->load() > 0.5f;
     params.reverseMix     = apvts.getRawParameterValue (ParamID::reverseMix)->load();
+    params.dream          = apvts.getRawParameterValue (ParamID::dream)->load();
+    params.swim           = apvts.getRawParameterValue (ParamID::swim)->load();
+    params.modShape       = apvts.getRawParameterValue (ParamID::modShape)->load();
+    params.shimmerDrift   = apvts.getRawParameterValue (ParamID::shimmerDrift)->load();
+    params.shimmerDir     = apvts.getRawParameterValue (ParamID::shimmerDir)->load();
+    params.glow           = apvts.getRawParameterValue (ParamID::glow)->load();
+    params.cloud          = apvts.getRawParameterValue (ParamID::cloud)->load();
+    params.vox            = apvts.getRawParameterValue (ParamID::vox)->load();
+    params.realm          = apvts.getRawParameterValue (ParamID::realm)->load();
+    params.chaos          = apvts.getRawParameterValue (ParamID::chaos)->load();
+
+    // DREAM macro: morph toward fever-dream targets without replacing knob values in APVTS
+    const float d = params.dream;
+    auto lerp = [d] (float base, float target) { return base + d * (target - base); };
+    params.modDepth    = juce::jmin (1.0f, lerp (params.modDepth,    0.92f));
+    params.shimmer     = juce::jmin (1.0f, lerp (params.shimmer,     juce::jmin (1.0f, params.shimmer + 0.45f)));
+    params.reverseMix  = lerp (params.reverseMix,  0.85f);
+    params.decayColor  = lerp (params.decayColor,  0.55f);
+    params.tiltEQ      = lerp (params.tiltEQ,      0.45f);
+    params.swim        = juce::jmin (1.0f, lerp (params.swim,        juce::jmax (params.swim, 0.65f)));
+    params.glow        = juce::jmin (1.0f, lerp (params.glow,        juce::jmax (params.glow, 0.35f)));
+    params.cloud       = juce::jmin (1.0f, lerp (params.cloud,       juce::jmax (params.cloud, 0.25f)));
+    params.realm       = juce::jmin (1.0f, lerp (params.realm,       juce::jmax (params.realm, 0.4f)));
+    params.shimmerDrift = juce::jmin (1.0f, lerp (params.shimmerDrift, juce::jmax (params.shimmerDrift, 0.5f)));
 
     // Report reverse-reverb latency (one ping-pong buffer = preDelay ms) to DAW
     const int newLatency = params.reverse

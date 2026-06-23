@@ -26,6 +26,16 @@ struct DSPParams
     bool  freeze        { false };  // locks feedback at unity, tail sustains
     bool  reverse       { false };  // reverse reverb: ping-pong input buffer runs backwards through FDN in parallel
     float reverseMix    { 0.75f }; // injection level of reversed signal into FDN (0=off, 1=full)
+    float dream         { 0.0f };  // 0–1 macro: boosts swim, shimmer, mod, reverse, brightness
+    float swim          { 0.0f };  // 0–1 post-FDN chorus swim + mod depth boost
+    float modShape      { 0.0f };  // 0=sine, 0.5=triangle, 1=smoothed random LFO
+    float shimmerDrift  { 0.0f };  // 0–1 pitch wobble intensity on shimmer voices
+    float shimmerDir    { 1.0f };  // −1=descending harmonics, +1=ascending
+    float glow          { 0.0f };  // 0–1 soft saturation in FDN feedback path
+    float cloud         { 0.0f };  // 0–1 parallel granular scatter on wet tail
+    float vox           { 0.0f };  // 0–1 formant vowel morph on wet tail
+    float realm         { 0.0f };  // 0–1 LF/HF breathing crossover morph
+    float chaos         { 0.0f };  // 0–1 rare instability events (mod spike / micro-freeze)
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,6 +123,8 @@ struct SSBShimmer
     void  reset();
     float process (float in, float phaseInc);
 };
+
+struct BiquadState { float x1 {}, x2 {}, y1 {}, y2 {}; };
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DSPEngine — owns all reverb state, lives on the audio thread exclusively
@@ -213,6 +225,41 @@ private:
     int  revReadPos   { 0 };
     int  revBufLen    { 0 };
     bool revBufReady  { false };
+    float revReadFrac   { 0.0f };   // fractional read for pitch smear
+    float revPitchRate  { 1.0f };   // playback speed through reversed chunk
+    int   revCrossfade  { 0 };      // samples remaining in chunk-boundary crossfade
+    int   revCrossfadeLen { 0 };
+    float revPrevL      { 0.0f };   // last sample from previous chunk for crossfade
+    float revPrevR      { 0.0f };
+
+    // ── Per-tap smoothed-random LFO targets (modShape) ─────────────────────
+    std::array<float, kNumTaps> lfoRandomTarget {};
+    std::array<float, kNumTaps> lfoRandomValue  {};
+    int   lfoRandomHold { 0 };
+
+    // ── Melt chorus (post-FDN swim) ───────────────────────────────────────
+    static constexpr int kMaxChorusSamples = 2400; // ~50ms at 48kHz
+    std::array<CircularBuffer, kNumChannels> chorusLines;
+    float chorusLfoPhaseL { 0.0f };
+    float chorusLfoPhaseR { 0.25f };
+
+    // ── Dual realm band-split (post-FDN) ──────────────────────────────────
+    std::array<float, kNumChannels> realmLPState {};
+    float realmLfoPhase { 0.0f };
+
+    // ── Cloud granular scatter (parallel, post-all-pass) ──────────────────
+    std::array<GranularShimmer, kNumChannels> cloudGranular;
+    float cloudLfoPhase { 0.0f };
+
+    // ── Formant morph (3 peaking states per channel) ──────────────────────
+    std::array<BiquadState, kNumChannels * 3> formantStates {};
+    float voxLfoPhase { 0.0f };
+
+    // ── Chaos instability events ──────────────────────────────────────────
+    float chaosModBoost     { 0.0f };
+    int   chaosFreezeRemain { 0 };
+    int   chaosCooldown     { 0 };
+    uint32_t chaosRng       { 0x12345678u };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DSPEngine)
 };

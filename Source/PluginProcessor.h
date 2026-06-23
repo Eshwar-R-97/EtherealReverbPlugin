@@ -22,6 +22,16 @@ namespace ParamID
     static const juce::String freeze         { "freeze"         };
     static const juce::String reverse        { "reverse"        };
     static const juce::String reverseMix     { "reverseMix"     };
+    static const juce::String dream          { "dream"          };
+    static const juce::String swim           { "swim"           };
+    static const juce::String modShape       { "modShape"       };
+    static const juce::String shimmerDrift   { "shimmerDrift"   };
+    static const juce::String shimmerDir     { "shimmerDir"     };
+    static const juce::String glow           { "glow"           };
+    static const juce::String cloud          { "cloud"          };
+    static const juce::String vox            { "vox"            };
+    static const juce::String realm          { "realm"          };
+    static const juce::String chaos          { "chaos"          };
 }
 
 class EtherealReverbProcessor : public juce::AudioProcessor
